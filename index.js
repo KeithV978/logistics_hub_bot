@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const { initBot } = require('./src/services');
-const webhookRoutes = require('./src/routes/webhookRoutes');
+const webhookRoutes = require('./src/routes');
 require('dotenv').config();
 
 const app = express();
