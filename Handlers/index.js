@@ -1,5 +1,6 @@
 const { bot } = require("../config");
 const { default: notifyRiders } = require("../Helper/notifyRiders");
+const { createDeliveryGroup } = require("../Helper/groupChat");
 
 // Handle /start command
 bot.onText(/\/start/, (msg) => {
@@ -176,11 +177,19 @@ bot.onText(/\/accept_(.+)/, async (msg, match) => {
   try {
     const rider = await db.collection('Rider').findOne({ 
       riderId: chatId,
-      isVerified: true 
+       
     });
 
     if (!rider) {
-      bot.sendMessage(chatId, "You must be a verified rider to accept orders. Please wait for your verification if you already registered.");
+      bot.sendMessage(chatId, "You are not a registered rider. Please register to continue.");
+      return;
+    }
+    if (rider.isVerified === false) {
+      bot.sendMessage(chatId, "You must be a verified rider to accept orders. Please wait for your verification to be completed.");
+      return;
+    }
+    if (rider.isAvailable === false) {
+      bot.sendMessage(chatId, "You must complete your delivery before taking another one.");
       return;
     }
 
@@ -200,20 +209,102 @@ bot.onText(/\/accept_(.+)/, async (msg, match) => {
       return;
     }
 
-    // Notify both rider and customer
-    bot.sendMessage(
-      chatId,
-      `✅ You've accepted order #${orderId}!\n📍 Pickup: ${order.value.pickup}\n🎯 Dropoff: ${order.value.dropoff}`
-    );
-    
-    bot.sendMessage(
-      order.value.customerId,
-      `🎉 Order #${orderId} has been accepted by a rider!\nThey will pick up your package shortly.`
-    );
+    try {
+      // Create temporary group chat
+      const groupId = await createDeliveryGroup(order.value, chatId, order.value.customerId);
+      
+      // Store group chat ID with order
+      await db.collection('Order').updateOne(
+        { orderId: orderId },
+        { $set: { groupChatId: groupId } }
+      );
+
+      // Send notifications
+      bot.sendMessage(
+        chatId,
+        `✅ Order #${orderId} accepted!\n` +
+        `You've been added to a temporary group chat with the customer.`
+      );
+      
+      bot.sendMessage(
+        order.value.customerId,
+        `🎉 Order #${orderId} accepted!\n` +
+        `You've been added to a temporary group chat with the rider.`
+      );
+
+    } catch (error) {
+      console.error('Error setting up group chat:', error);
+      // Continue with regular notifications if group creation fails
+      // bot.sendMessage(
+      //   chatId,
+      //   `✅ You've accepted order #${orderId}!\n📍 Pickup: ${order.value.pickup}\n🎯 Dropoff: ${order.value.dropoff}`
+      // );
+      
+      // bot.sendMessage(
+      //   order.value.customerId,
+      //   `🎉 Order #${orderId} has been accepted by a rider!\nThey will pick up your package shortly.`
+      // );
+    }
 
   } catch (error) {
     console.error('Error accepting order:', error);
     bot.sendMessage(chatId, "Sorry, there was an error accepting the order. Please try again.");
+  }
+});
+
+// Handle /cancel command for customers
+bot.onText(/\/cancel/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  try {
+    // Check if this is a group chat
+    const order = await db.collection('Order').findOne({ 
+      groupChatId: chatId,
+      status: 'in-progress'
+    });
+
+    if (!order) {
+      bot.sendMessage(chatId, "This command can only be used in an active delivery group chat.");
+      return;
+    }
+
+    // Verify the user is the customer
+    if (order.customerId !== userId) {
+      bot.sendMessage(chatId, "Only the customer can cancel the order.");
+      return;
+    }
+
+    // Update order status
+    await db.collection('Order').updateOne(
+      { orderId: order.orderId },
+      { $set: { status: 'cancelled' } }
+    );
+
+    // Update rider availability
+    await db.collection('Rider').updateOne(
+      { riderId: order.riderId },
+      { $set: { isAvailable: true } }
+    );
+
+    // Notify both parties in group
+    await bot.sendMessage(chatId, 
+      `❌ Order #${order.orderId} has been cancelled by the customer.\n` +
+      `This group chat will be deleted in 1 minute.`
+    );
+
+    // Schedule group deletion
+    setTimeout(async () => {
+      try {
+        await bot.deleteChat(chatId);
+      } catch (error) {
+        console.error('Error deleting group chat:', error);
+      }
+    }, 60000); // 1 minute delay
+
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    bot.sendMessage(chatId, "Sorry, there was an error cancelling the order. Please try again.");
   }
 });
 
