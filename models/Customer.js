@@ -5,7 +5,6 @@ const customerSchema = new mongoose.Schema({
     username: { type: String },
     firstName: { type: String },
     lastName: { type: String },
-    phoneNumber: { type: String },
     location: {
         type: { type: String, default: 'Point' },
         coordinates: [Number]

@@ -5,14 +5,12 @@ const riderSchema = new mongoose.Schema({
     username: { type: String },
     firstName: { type: String },
     lastName: { type: String },
-    phoneNumber: { type: String },
     isAvailable: { type: Boolean, default: true },
     location: {
         type: { type: String, default: 'Point' },
         coordinates: [Number]
     },
     currentOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
-    rating: { type: Number, default: 5 },
     createdAt: { type: Date, default: Date.now }
 });
 

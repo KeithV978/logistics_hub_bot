@@ -1,37 +1,80 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const helmet = require('helmet');
-const { initBot } = require('./src/services');
-const webhookRoutes = require('./src/routes');
 require('dotenv').config();
+const { Telegraf } = require('telegraf');
+const mongoose = require('mongoose');
+const Customer = require('./models/Customer');
+const Rider = require('./models/Rider');
 
-const app = express();
+// Initialize bot
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
-app.use(helmet());
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
+// MongoDB connection
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('MongoDB connection error:', err));
 
-// Routes
-app.use('/webhook', webhookRoutes);
-
-// Initialize bot
-const bot = initBot();
-
-// Error handling
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
+// Start command
+bot.start(async (ctx) => {
+    const keyboard = {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: "I'm a Customer", callback_data: 'register_customer' }],
+                [{ text: "I'm a Rider", callback_data: 'register_rider' }]
+            ]
+        }
+    };
+    await ctx.reply('Welcome to the Delivery Bot! Please select your role:', keyboard);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Handle callback queries
+bot.on('callback_query', async (ctx) => {
+    const action = ctx.callbackQuery.data;
+    const user = ctx.from;
+
+    if (action === 'register_customer') {
+        await registerCustomer(ctx, user);
+    } else if (action === 'register_rider') {
+        await registerRider(ctx, user);
+    }
 });
+
+// Register customer
+const registerCustomer = async (ctx, user) => {
+    try {
+        const customer = await Customer.findOneAndUpdate(
+            { telegramId: user.id },
+            {
+                username: user.username,
+                firstName: user.first_name,
+                lastName: user.last_name
+            },
+            { upsert: true, new: true }
+        );
+        await ctx.reply('You are registered as a customer! Share your location to place an order.');
+    } catch (error) {
+        console.error('Error registering customer:', error);
+        await ctx.reply('Sorry, there was an error registering you.');
+    }
+};
+
+// Register rider
+const registerRider = async (ctx, user) => {
+    try {
+        const rider = await Rider.findOneAndUpdate(
+            { telegramId: user.id },
+            {
+                username: user.username,
+                firstName: user.first_name,
+                lastName: user.last_name
+            },
+            { upsert: true, new: true }
+        );
+        await ctx.reply('You are registered as a rider! Share your location to start receiving orders.');
+    } catch (error) {
+        console.error('Error registering rider:', error);
+        await ctx.reply('Sorry, there was an error registering you.');
+    }
+};
+
+// Launch bot
+bot.launch();
+console.log('Bot is running...');
