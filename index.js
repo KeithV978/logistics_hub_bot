@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { bot } = require('./config');
+const { initBot } = require('./config');
 require('dotenv').config();
 
 const app = express();
@@ -18,8 +18,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Initialize bot
+const bot = initBot();
+
+// Start polling only after server is ready
 bot.on('polling_error', (error) => {
-    console.error('Bot polling error:', error);
+    console.error('Bot polling error:', error.message);
 });
 
 // Basic error handling
@@ -30,8 +33,15 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log('Bot is running...');
+    if (process.env.NODE_ENV !== 'production') {
+        try {
+            await bot.startPolling();
+            console.log('Bot polling started successfully');
+        } catch (error) {
+            console.error('Failed to start bot polling:', error.message);
+        }
+    }
 });
 
