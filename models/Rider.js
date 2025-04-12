@@ -8,7 +8,7 @@ const riderSchema = new mongoose.Schema({
     isAvailable: { type: Boolean, default: true },
     location: {
         type: { type: String, default: 'Point' },
-        coordinates: [Number]
+        coordinates: { type: [Number], required: true }
     },
     currentOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
     createdAt: { type: Date, default: Date.now }
