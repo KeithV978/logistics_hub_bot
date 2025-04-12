@@ -14,7 +14,7 @@ mongoose.connect(process.env.MONGODB_URI, {
     serverSelectionTimeoutMS: 5000,
     maxPoolSize: 10
 })
-.then(() => console.log('Connected to MongoDB'))
+.then(() => console.log('Connected to MongoDB :)'))
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Initialize bot
