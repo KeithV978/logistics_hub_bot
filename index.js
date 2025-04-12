@@ -3,6 +3,7 @@ const { Telegraf } = require('telegraf');
 const mongoose = require('mongoose');
 const Customer = require('./models/Customer');
 const Rider = require('./models/Rider');
+const express = require('express');
 
 // Initialize bot
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -11,6 +12,19 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('MongoDB connection error:', err));
+
+// Set webhook
+const webhookUrl = `${process.env.WEBHOOK_URL}/bot${process.env.BOT_TOKEN}`;
+bot.telegram.setWebhook(webhookUrl);
+
+// Start Express server to handle webhook requests
+const app = express();
+app.use(bot.webhookCallback(`/bot${process.env.BOT_TOKEN}`));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
 
 // Start command
 bot.start(async (ctx) => {
