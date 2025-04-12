@@ -1,9 +1,9 @@
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const mongoose = require('mongoose');
-const Customer = require('./models/Customer');
-const Rider = require('./models/Rider');
 const express = require('express');
+const Rider = require('./models/Rider');
+const Order = require('./models/Order');
 
 // Initialize bot
 const bot = new Telegraf(process.env.BOT_TOKEN);
@@ -39,64 +39,40 @@ bot.start(async (ctx) => {
     await ctx.reply('Welcome to the Delivery Bot! Please select your role:', keyboard);
 });
 
-// Handle callback queries
+// Register rider
 bot.on('callback_query', async (ctx) => {
     const action = ctx.callbackQuery.data;
     const user = ctx.from;
 
-    if (action === 'register_customer') {
-        await registerCustomer(ctx, user);
-    } else if (action === 'register_rider') {
-        await registerRider(ctx, user);
+    if (action === 'register_rider') {
+        await ctx.reply('Please provide your bank details in the format: BankName,AccountNumber');
+        bot.on('text', async (ctx) => {
+            const [bankName, accountNumber] = ctx.message.text.split(',');
+            if (!bankName || !accountNumber) {
+                return ctx.reply('Invalid format. Please provide your bank details in the format: BankName,AccountNumber');
+            }
+
+            try {
+                const rider = await Rider.findOneAndUpdate(
+                    { telegramId: user.id },
+                    {
+                        username: user.username,
+                        firstName: user.first_name,
+                        lastName: user.last_name,
+                        bankDetails: { bankName, accountNumber },
+                        location: { type: 'Point', coordinates: [0, 0] }, // Default location
+                        isAvailable: true
+                    },
+                    { upsert: true, new: true }
+                );
+                await ctx.reply('You are registered as a rider! Share your location to start receiving orders.');
+            } catch (error) {
+                console.error('Error registering rider:', error);
+                await ctx.reply('Sorry, there was an error registering you.');
+            }
+        });
     }
 });
-
-// Register customer
-const registerCustomer = async (ctx, user) => {
-    try {
-        const customer = await Customer.findOneAndUpdate(
-            { telegramId: user.id },
-            {
-                username: user.username,
-                firstName: user.first_name,
-                lastName: user.last_name
-            },
-            { upsert: true, new: true }
-        );
-        await ctx.reply('You are registered as a customer! Share your location to place an order.');
-    } catch (error) {
-        console.error('Error registering customer:', error);
-        await ctx.reply('Sorry, there was an error registering you.');
-    }
-};
-
-// Register rider
-const registerRider = async (ctx, user) => {
-    try {
-        // Example coordinates (replace with actual location sharing logic)
-        const defaultCoordinates = [0, 0]; // Longitude, Latitude
-
-        const rider = await Rider.findOneAndUpdate(
-            { telegramId: user.id },
-            {
-                username: user.username,
-                firstName: user.first_name,
-                lastName: user.last_name,
-                location: {
-                    type: 'Point',
-                    coordinates: defaultCoordinates // Ensure valid coordinates are set
-                },
-                isAvailable: true
-            },
-            { upsert: true, new: true }
-        );
-
-        await ctx.reply('You are registered as a rider! Share your location to start receiving orders.');
-    } catch (error) {
-        console.error('Error registering rider:', error);
-        await ctx.reply('Sorry, there was an error registering you.');
-    }
-};
 
 // Handle location sharing
 bot.on('location', async (ctx) => {
@@ -126,6 +102,56 @@ bot.on('location', async (ctx) => {
     }
 });
 
-// Launch bot
-bot.launch();
-console.log('Bot is running...');
+// Notify nearby riders and create temporary group
+bot.command('order', async (ctx) => {
+    const user = ctx.from;
+    const pickupLocation = { type: 'Point', coordinates: [0, 0] }; // Replace with actual location
+    const deliveryLocation = { type: 'Point', coordinates: [1, 1] }; // Replace with actual location
+
+    try {
+        const nearbyRiders = await Rider.find({
+            location: {
+                $near: {
+                    $geometry: pickupLocation,
+                    $maxDistance: 5000 // 5 km radius
+                }
+            },
+            isAvailable: true
+        });
+
+        if (nearbyRiders.length === 0) {
+            return ctx.reply('No riders available nearby.');
+        }
+
+        const order = await Order.create({
+            customer: user.id,
+            pickupLocation,
+            deliveryLocation
+        });
+
+        for (const rider of nearbyRiders) {
+            await bot.telegram.sendMessage(rider.telegramId, `New order available! Use /accept_${order._id} to accept.`);
+        }
+
+        bot.command(`accept_${order._id}`, async (ctx) => {
+            const rider = await Rider.findOne({ telegramId: ctx.from.id });
+            if (!rider) {
+                return ctx.reply('You are not registered as a rider.');
+            }
+
+            order.rider = rider._id;
+            order.status = 'accepted';
+            await order.save();
+
+            const group = await bot.telegram.createChat({
+                title: `Order ${order._id}`,
+                members: [user.id, rider.telegramId]
+            });
+
+            ctx.reply(`Order accepted! Temporary group created: ${group.title}`);
+        });
+    } catch (error) {
+        console.error('Error creating order:', error);
+        ctx.reply('Sorry, there was an error creating the order.');
+    }
+});
