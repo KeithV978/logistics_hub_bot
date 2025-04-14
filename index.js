@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const { bot, setupWebhook } = require('./config/bot');
-const errorHandler = require('./middlewares/errorHandler');
-const logger = require('./utils/logger');
+const { bot, setupWebhook } = require('./src/config/bot');
+const errorHandler = require('./src/middlewares/errorHandler');
+const logger = require('./src/utils/logger');
 
 // Create Express app
 const app = express();
