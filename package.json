@@ -2,23 +2,24 @@
   "name": "logistics_hub",
   "version": "1.0.0",
   "description": "Telegram bot for connecting customers with delivery riders and errand runners (or erranders)",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
-  },
-  "engines": {
-    "node": ">=16.0.0"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "geolib": "^3.3.4",
-    "helmet": "^7.1.0",
-    "https-proxy-agent": "^7.0.6",
-    "joi": "^17.11.0",
     "pg": "^8.14.1",
-    "telegraf": "^4.16.3"
+    "telegraf": "^4.16.3",
+    "telegraf-session-local": "^2.1.1",
+    "winston": "^3.11.0",
+    "node-geocoder": "^4.2.0",
+    "@turf/turf": "^6.5.0",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   }
 }

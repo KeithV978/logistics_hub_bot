@@ -1,47 +1,37 @@
-class BotError extends Error {
-    constructor(message, code = 'INTERNAL_ERROR', metadata = {}) {
-        super(message);
-        this.code = code;
-        this.metadata = metadata;
+const logger = require('../utils/logger');
+
+// Error handling middleware for Express
+const errorHandler = (err, req, res, next) => {
+    logger.error('Error:', {
+        message: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method
+    });
+
+    // Handle specific error types
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Validation failed',
+            details: err.details
+        });
     }
-}
 
-class ValidationError extends BotError {
-    constructor(message, metadata = {}) {
-        super(message, 'VALIDATION_ERROR', metadata);
+    if (err.name === 'UnauthorizedError') {
+        return res.status(401).json({
+            status: 'error',
+            message: 'Unauthorized access'
+        });
     }
-}
 
-class DatabaseError extends BotError {
-    constructor(message, metadata = {}) {
-        super(message, 'DATABASE_ERROR', metadata);
-    }
-}
-
-const errorHandler = async (ctx, next) => {
-    try {
-        await next();
-    } catch (error) {
-        console.error(`Error for ${ctx.updateType}:`, error);
-
-        const errorMessage = error instanceof BotError
-            ? error.message
-            : 'An unexpected error occurred. Please try again later.';
-
-        // Send error message to user
-        await ctx.reply(errorMessage);
-
-        // If it's a critical error, notify admin
-        if (!(error instanceof ValidationError)) {
-            const adminMessage = `🚨 Error in ${ctx.updateType}\nUser: ${ctx.from?.id}\nError: ${error.message}\nStack: ${error.stack}`;
-            await ctx.telegram.sendMessage(process.env.ADMIN_CHAT_ID, adminMessage).catch(console.error);
-        }
-    }
+    // Default error response
+    res.status(err.status || 500).json({
+        status: 'error',
+        message: process.env.NODE_ENV === 'production' 
+            ? 'An unexpected error occurred' 
+            : err.message
+    });
 };
 
-module.exports = {
-    errorHandler,
-    BotError,
-    ValidationError,
-    DatabaseError
-};
+module.exports = errorHandler;
