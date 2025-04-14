@@ -29,19 +29,20 @@ const startServer = async () => {
     try {
         // Set up webhook
         await setupWebhook();
-
-        console.log("crossed webhook setup")
+ 
 
         // Start listening
         const port = process.env.PORT || 3000;
         app.listen(port, () => {
             logger.info(`Server is running on port ${port}`);
+            console.log(`Server is running on port ${port}`);
         });
-
-        // Log bot info
+        
+        // Log bot log
         const botInfo = await bot.telegram.getMe();
         logger.info('Bot info:', botInfo);
-
+        console.log(`SeBot info`, botInfo );
+        
         // Launch bot
         bot.launch();
 
