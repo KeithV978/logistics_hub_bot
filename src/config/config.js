@@ -3,9 +3,11 @@ require('dotenv').config();
 const config = {
   telegram: {
     token: process.env.BOT_TOKEN,
-    webhookDomain: process.env.WEBHOOK_URL,
+    webhookDomain: process.env.WEBHOOK_DOMAIN,
     webhookPath: process.env.WEBHOOK_PATH || '/webhook',
-    adminChatId: process.env.ADMIN_CHAT_ID
+    adminChatId: process.env.ADMIN_CHAT_ID,
+    webhookRetries: 3,  // Add retry count
+    retryDelay: 5000    // Add delay between retries (5 seconds)
   },
   server: {
     port: process.env.PORT || 3000
