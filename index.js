@@ -2,13 +2,13 @@ const { Telegraf, session } = require('telegraf');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const config = require('./config/config');
-const { errorHandler } = require('./middlewares/errorHandler');
-const { pool } = require('./database/connection');
-const registration = require('./handlers/registrationHandler');
-const orders = require('./handlers/orderHandler');
-const errands = require('./handlers/errandHandler');
-const utilities = require('./handlers/utilityHandler');
+const config = require('./src/config/config');
+const { errorHandler } = require('./src/middlewares/errorHandler');
+const { pool } = require('./src/database/connection');
+const registration = require('./src/handlers/registrationHandler');
+const orders = require('./src/handlers/orderHandler');
+const errands = require('./src/handlers/errandHandler');
+const utilities = require('./src/handlers/utilityHandler');
 
 // Initialize bot with token
 const bot = new Telegraf(config.telegram.token);
