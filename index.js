@@ -9,6 +9,8 @@ const registration = require('./src/handlers/registrationHandler');
 const orders = require('./src/handlers/orderHandler');
 const errands = require('./src/handlers/errandHandler');
 const utilities = require('./src/handlers/utilityHandler');
+const http = require('http');
+const https = require('https');
 
 // Initialize bot with token and custom options
 const bot = new Telegraf(config.telegram.token, {
@@ -16,7 +18,14 @@ const bot = new Telegraf(config.telegram.token, {
         // Increase timeouts due to high latency
         timeout: 30000,
         // Add webhookReply: false to ensure messages are sent even if webhook reply fails
-        webhookReply: false
+        webhookReply: false,
+        // Add custom agent configuration
+        agent: new https.Agent({
+            keepAlive: true,
+            keepAliveMsecs: 10000,
+            timeout: 30000,
+            maxSockets: 256
+        })
     }
 });
 
@@ -121,14 +130,19 @@ const startServer = async () => {
             throw new Error('Unable to establish connection to Telegram');
         }
 
-        // Start bot with long polling for testing
-        console.log('Starting bot in long polling mode...');
-        await bot.launch();
-        console.log('Bot started successfully');
+        // Set up webhook
+        console.log('Setting up webhook...');
+        const webhookUrl = `${config.telegram.webhookDomain}${config.telegram.webhookPath}`;
+        await bot.telegram.setWebhook(webhookUrl);
+        console.log(`Webhook set to ${webhookUrl}`);
+
+        // Set up Express endpoint for webhook
+        app.use(bot.webhookCallback(config.telegram.webhookPath));
         
-        // Start express server for health checks
+        // Start express server for webhook and health checks
         app.listen(config.server.port, () => {
             console.log(`Server is running on port ${config.server.port}`);
+            console.log('Bot is ready to receive updates via webhook');
         });
     } catch (error) {
         console.error('Failed to start server:', error);
