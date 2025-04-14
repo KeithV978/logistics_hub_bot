@@ -85,6 +85,10 @@ bot.command('support', async (ctx) => {
 });
 
 // Health check endpoint
+app.get('/', (req, res) => {
+    res.send('Logistics Hub Bot is running!');
+});
+
 app.get('/health', async (req, res) => {
     try {
         await pool.query('SELECT 1');
@@ -116,19 +120,24 @@ const startServer = async () => {
         const me = await bot.telegram.getMe();
         console.log('Successfully connected to Telegram bot:', me.username);
 
-        // Set up webhook
-        console.log('Setting up webhook...');
-        const webhookUrl = `${config.telegram.webhookDomain}${config.telegram.webhookPath}`;
-        await bot.telegram.setWebhook(webhookUrl);
-        console.log(`Webhook set to ${webhookUrl}`);
-
-        // Set up Express endpoint for webhook
-        app.use(bot.webhookCallback(config.telegram.webhookPath));
+        if (process.env.NODE_ENV === 'production') {
+            // Set up webhook for production
+            const webhookUrl = `${config.telegram.webhookDomain}${config.telegram.webhookPath}`;
+            await bot.telegram.setWebhook(webhookUrl);
+            console.log(`Webhook set to ${webhookUrl}`);
+            
+            // Set up Express endpoint for webhook
+            app.use(bot.webhookCallback(config.telegram.webhookPath));
+        } else {
+            // Use polling for development
+            await bot.launch();
+            console.log('Bot started in polling mode');
+        }
         
         // Start express server for webhook and health checks
-        app.listen(config.server.port, () => {
-            console.log(`Server is running on port ${config.server.port}`);
-            console.log('Bot is ready to receive updates via webhook');
+        const PORT = process.env.PORT || config.server.port;
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`Server is running on port ${PORT}`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);

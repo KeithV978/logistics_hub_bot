@@ -4,7 +4,11 @@
   "description": "Telegram bot for connecting customers with delivery riders and errand runners (or erranders)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "cors": "^2.8.5",
