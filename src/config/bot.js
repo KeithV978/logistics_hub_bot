@@ -24,9 +24,11 @@ const setupWebhook = async () => {
     const webhookUrl = `${process.env.WEBHOOK_DOMAIN}${process.env.WEBHOOK_PATH}`;
     try {
         await bot.telegram.setWebhook(webhookUrl);
+        console.log(`Webhook set up successfully at ${webhookUrl}`);
         logger.info(`Webhook set up successfully at ${webhookUrl}`);
     } catch (error) {
         logger.error('Failed to set up webhook:', error);
+        console.log('Failed to set up webhook:', error);
         throw error;
     }
 };

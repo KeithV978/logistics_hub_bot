@@ -30,6 +30,8 @@ const startServer = async () => {
         // Set up webhook
         await setupWebhook();
 
+        console.log("crossed webhook setup")
+
         // Start listening
         const port = process.env.PORT || 3000;
         app.listen(port, () => {
