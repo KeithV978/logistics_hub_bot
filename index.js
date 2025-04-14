@@ -1,4 +1,4 @@
-const { Telegraf, session } = require('telegraf');
+const { Telegraf, session, Composer } = require('telegraf');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -31,11 +31,15 @@ bot.use(session({
 // Error handling middleware
 bot.use(errorHandler);
 
-// Register command handlers
-bot.use(registration);
-bot.use(orders);
-bot.use(errands);
-bot.use(utilities);
+// Create a composer for all handlers
+const composer = new Composer();
+composer.use(registration);
+composer.use(orders);
+composer.use(errands);
+composer.use(utilities);
+
+// Register all handlers with the bot
+bot.use(composer);
 
 // Basic commands
 bot.command('start', async (ctx) => {
