@@ -9,25 +9,9 @@ const registration = require('./src/handlers/registrationHandler');
 const orders = require('./src/handlers/orderHandler');
 const errands = require('./src/handlers/errandHandler');
 const utilities = require('./src/handlers/utilityHandler');
-const http = require('http');
-const https = require('https');
 
-// Initialize bot with token and custom options
-const bot = new Telegraf(config.telegram.token, {
-    telegram: {
-        // Increase timeouts due to high latency
-        timeout: 30000,
-        // Add webhookReply: false to ensure messages are sent even if webhook reply fails
-        webhookReply: false,
-        // Add custom agent configuration
-        agent: new https.Agent({
-            keepAlive: true,
-            keepAliveMsecs: 10000,
-            timeout: 30000,
-            maxSockets: 256
-        })
-    }
-});
+// Initialize bot with token
+const bot = new Telegraf(config.telegram.token);
 
 // Express app setup
 const app = express();
@@ -125,10 +109,8 @@ const testBotConnection = async () => {
 const startServer = async () => {
     try {
         // Test bot connection first
-        const isConnected = await testBotConnection();
-        if (!isConnected) {
-            throw new Error('Unable to establish connection to Telegram');
-        }
+        const me = await bot.telegram.getMe();
+        console.log('Successfully connected to Telegram bot:', me.username);
 
         // Set up webhook
         console.log('Setting up webhook...');

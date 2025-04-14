@@ -5,9 +5,7 @@ const config = {
     token: process.env.BOT_TOKEN,
     webhookDomain: process.env.WEBHOOK_DOMAIN,
     webhookPath: process.env.WEBHOOK_PATH || '/webhook',
-    adminChatId: process.env.ADMIN_CHAT_ID,
-    webhookRetries: 3,  // Add retry count
-    retryDelay: 5000    // Add delay between retries (5 seconds)
+    adminChatId: process.env.ADMIN_CHAT_ID
   },
   server: {
     port: process.env.PORT || 3000
