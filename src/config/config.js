@@ -3,7 +3,7 @@ require('dotenv').config();
 const config = {
   telegram: {
     token: process.env.BOT_TOKEN,
-    webhookDomain: process.env.WEBHOOK_DOMAIN,
+    webhookDomain: process.env.WEBHOOK_URL,
     webhookPath: process.env.WEBHOOK_PATH || '/webhook',
     adminChatId: process.env.ADMIN_CHAT_ID
   },
