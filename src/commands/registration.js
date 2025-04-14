@@ -35,7 +35,7 @@ const initializeRegistration = async (ctx) => {
             Markup.keyboard([
                 ['🛍️ Customer'],
                 ['🚚 Rider'],
-                ['🏃 Errander']
+                ['🏃 Errander (Errand Runner)']
             ]).oneTime().resize()
         );
     } catch (error) {
@@ -49,7 +49,7 @@ const handleRoleSelection = async (ctx) => {
     const roleMap = {
         '🛍️ Customer': 'user',
         '🚚 Rider': 'rider',
-        '🏃 Errander': 'errander'
+        '🏃 Errander (Errand Runner)': 'errander'
     };
 
     const selectedRole = roleMap[ctx.message.text];
