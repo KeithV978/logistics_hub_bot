@@ -10,8 +10,15 @@ const orders = require('./src/handlers/orderHandler');
 const errands = require('./src/handlers/errandHandler');
 const utilities = require('./src/handlers/utilityHandler');
 
-// Initialize bot with token
-const bot = new Telegraf(config.telegram.token);
+// Initialize bot with token and custom options
+const bot = new Telegraf(config.telegram.token, {
+    telegram: {
+        // Increase timeouts due to high latency
+        timeout: 30000,
+        // Add webhookReply: false to ensure messages are sent even if webhook reply fails
+        webhookReply: false
+    }
+});
 
 // Express app setup
 const app = express();
@@ -105,55 +112,23 @@ const testBotConnection = async () => {
     }
 };
 
-// Webhook setup with retries
-const setupWebhook = async () => {
-    // First test the connection
-    const isConnected = await testBotConnection();
-    if (!isConnected) {
-        throw new Error('Cannot set webhook: Unable to establish connection to Telegram');
-    }
-
-    let lastError;
-    for (let attempt = 1; attempt <= config.telegram.webhookRetries; attempt++) {
-        try {
-            const webhookUrl = `${config.telegram.webhookDomain}${config.telegram.webhookPath}`;
-            console.log(`Attempting to set webhook URL: ${webhookUrl}`);
-            
-            // First, delete any existing webhook
-            await bot.telegram.deleteWebhook();
-            console.log('Deleted existing webhook');
-            
-            // Then set the new webhook
-            await bot.telegram.setWebhook(webhookUrl);
-            console.log('Webhook set successfully');
-            return;
-        } catch (error) {
-            lastError = error;
-            console.log(`Webhook setup attempt ${attempt} failed:`, {
-                error: error.message,
-                code: error.code,
-                description: error.description,
-                webhookDomain: config.telegram.webhookDomain,
-                webhookPath: config.telegram.webhookPath
-            });
-            await delay(config.telegram.retryDelay);
-        }
-    }
-    throw new Error(`Failed to set webhook after ${config.telegram.webhookRetries} attempts: ${lastError.message}`);
-};
-
 // Initialize webhook and start server
 const startServer = async () => {
     try {
-        await setupWebhook();
+        // Test bot connection first
+        const isConnected = await testBotConnection();
+        if (!isConnected) {
+            throw new Error('Unable to establish connection to Telegram');
+        }
+
+        // Start bot with long polling for testing
+        console.log('Starting bot in long polling mode...');
+        await bot.launch();
+        console.log('Bot started successfully');
         
-        // Set up webhook endpoint
-        app.use(bot.webhookCallback(config.telegram.webhookPath));
-        
-        // Start server
+        // Start express server for health checks
         app.listen(config.server.port, () => {
             console.log(`Server is running on port ${config.server.port}`);
-            console.log(`Webhook URL: ${config.telegram.webhookDomain}${config.telegram.webhookPath}`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);
