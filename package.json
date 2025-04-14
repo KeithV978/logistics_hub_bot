@@ -4,7 +4,7 @@
   "description": "Telegram bot for connecting customers with delivery riders",
   "main": "src/index.js",
   "scripts": {
-    "start": "node /src/index.js"
+    "start": "node src/index"
   },
   "dependencies": {
     "cors": "^2.8.5",
