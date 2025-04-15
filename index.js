@@ -3,7 +3,7 @@ const { Telegraf } = require('telegraf'); // Import Telegraf
 const express = require('express'); // Import Express
 
 // Initialize Telegraf bot with your token
-const token = process.env.TELEGRAM_TOKEN;
+const token = process.env.BOT_TOKEN;
 const bot = new Telegraf(token);
 
 // Initialize Express app
@@ -12,7 +12,7 @@ app.use(express.json()); // Parse incoming JSON requests
 app.use(bot.webhookCallback('/webhook')); // Handle Telegram updates via webhook
 
 // Set webhook (optional, for production)
-const webhookUrl = process.env.WEBHOOK_URL;
+const webhookUrl = process.env.WEBHOOK_DOMAIN;
 bot.telegram.setWebhook(`${webhookUrl}/webhook`)
   .then(() => console.log('Webhook set successfully'))
   .catch(err => console.error('Webhook setup failed:', err));
