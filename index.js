@@ -5,7 +5,7 @@ const express = require('express');
 const axios = require('axios');
 
 // Initialize Telegram bot and Express app
-const bot = new Telegraf(process.env.TELEGRAM_TOKEN);
+const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
 app.use(express.json());
 
@@ -15,7 +15,7 @@ const pool = new Pool({
 });
 
 // Middleware to verify webhook requests (optional security)
-const webhookSecret = process.env.TELEGRAM_TOKEN.split(':')[1];
+const webhookSecret = process.env.BOT_TOKEN.split(':')[1];
 app.use((req, res, next) => {
     const telegramSignature = req.headers['x-telegram-bot-api-secret-token'];
     if (telegramSignature !== webhookSecret) {
