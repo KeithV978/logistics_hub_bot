@@ -234,6 +234,6 @@ app.post('/webhook', (req, res) => {
 
 app.listen(process.env.PORT, async () => {
     console.log(`Server running on port ${process.env.PORT}`);
-    await bot.telegram.setWebhook(`${process.env.WEBHOOK_URL}/webhook`, { secret_token: webhookSecret });
+    await bot.telegram.setWebhook(`${process.env.WEBHOOK_DOMAIN}/webhook`, { secret_token: webhookSecret });
     console.log('Webhook set');
 });
