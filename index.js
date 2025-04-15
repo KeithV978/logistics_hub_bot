@@ -10,6 +10,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const secretPath = '/secret-path'; // Customize this path
 const secretToken = 'your-secret-token'; // Customize this token
 
+console.log("heree")
 // Set up Telegraf to handle webhook updates at the specified path
 app.use(bot.webhookCallback(secretPath, { secretToken }));
 
