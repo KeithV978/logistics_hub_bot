@@ -1,40 +1,24 @@
-require('dotenv').config(); // Load environment variables
-const { Telegraf } = require('telegraf'); // Import Telegraf
-const express = require('express'); // Import Express
+const express = require('express');
+const { Telegraf } = require('telegraf');
 
-// Initialize Telegraf bot with your token
-const token = process.env.BOT_TOKEN;
-const bot = new Telegraf(token);
-
-// Initialize Express app
 const app = express();
-app.use(express.json()); // Parse incoming JSON requests
-app.use(bot.webhookCallback('/webhook')); // Handle Telegram updates via webhook
 
-// Set webhook (optional, for production)
-const webhookUrl = process.env.WEBHOOK_DOMAIN;
-bot.telegram.setWebhook(`${webhookUrl}/webhook`)
-  .then(() => console.log('Webhook set successfully'))
-  .catch(err => console.error('Webhook setup failed:', err));
+// Replace 'YOUR_BOT_TOKEN' with the token from BotFather
+const bot = new Telegraf(process.env.BOT_TOKEN);
+
+// Define the webhook path and secret token
+const secretPath = '/secret-path'; // Customize this path
+const secretToken = 'your-secret-token'; // Customize this token
+
+// Set up Telegraf to handle webhook updates at the specified path
+app.use(bot.webhookCallback(secretPath, { secretToken }));
 
 // Define bot commands
-bot.start((ctx) => {
-  // Reply to /start command
-  ctx.reply('Welcome to the bot! Use /help to see available commands.');
-});
-
-bot.command('help', (ctx) => {
-  // Reply to /help command
-  ctx.reply('Available commands:\n/start - Start the bot\n/help - Show this message');
-});
-
-bot.on('text', (ctx) => {
-  // Reply to any text message
-  ctx.reply(`You said: ${ctx.message.text}`);
-});
+bot.start((ctx) => ctx.reply('Welcome to the bot!'));
+bot.help((ctx) => ctx.reply('Send me any message.'));
 
 // Start the Express server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
