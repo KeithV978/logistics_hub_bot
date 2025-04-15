@@ -7,8 +7,8 @@ const botController = require('./src/controllers/botController');
 dotenv.config();
 
 const app = express();
-const token = process.env.TELEGRAM_TOKEN;
-const webhookUrl = process.env.WEBHOOK_URL;
+const token = process.env.BOT_TOKEN;
+const webhookUrl = process.env.WEBHOOK_DOMAIN;
 const bot = new TelegramBot(token, { polling: false });
 
 app.use(express.json());
