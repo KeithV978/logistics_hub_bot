@@ -3,6 +3,24 @@ const { Telegraf, session, Scenes } = require('telegraf');
 const { Pool } = require('pg');
 const axios = require('axios');
 const express = require('express');
+const winston = require('winston');
+const cors = require('cors');
+const crypto = require('crypto');
+
+// Configure logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'logistics-hub-bot' },
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' })
+  ]
+});
 
 // Database connection
 const pool = new Pool({
@@ -16,15 +34,16 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 // Set up express server for webhook
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // Middleware
 bot.use(session());
 
 // Import scenes
-const { customerOrderScene } = require('./scenes/customerOrderScene');
-const { customerErrandScene } = require('./scenes/customerErrandScene');
-const { riderRegistrationScene } = require('./scenes/riderRegistrationScene');
-const { erranderRegistrationScene } = require('./scenes/erranderRegistrationScene');
+const { customerOrderScene } = require('./src/scenes/customerOrderScene');
+const { customerErrandScene } = require('./src/scenes/customerErrandScene');
+const { riderRegistrationScene } = require('./src/scenes/riderRegistrationScene');
+const { erranderRegistrationScene } = require('./src/scenes/erranderRegistrationScene');
 
 // Create scene manager
 const stage = new Scenes.Stage([
@@ -41,8 +60,10 @@ const {
   findNearbyErranders, 
   createPrivateGroup,
   validateLocation,
-  calculateDistance
-} = require('./utils/helpers');
+  calculateDistance,
+  verifyNIN,
+  updateProviderLocation
+} = require('./src/utils/helpers');
 
 // Command handlers
 bot.command('start', async (ctx) => {
@@ -834,31 +855,94 @@ bot.catch((err, ctx) => {
   });
 });
 
+// Add webhook security middleware
+const webhookSecurityMiddleware = (req, res, next) => {
+  try {
+    // In a production environment, you would validate the request
+    // For example, checking Telegram's X-Telegram-Bot-Api-Secret-Token header
+    if (process.env.NODE_ENV === 'production') {
+      const telegramToken = req.headers['x-telegram-bot-api-secret-token'];
+      
+      if (!telegramToken || telegramToken !== process.env.TELEGRAM_SECRET_TOKEN) {
+        logger.warn('Unauthorized webhook request');
+        return res.status(403).send('Unauthorized');
+      }
+    }
+    
+    next();
+  } catch (error) {
+    logger.error('Webhook security middleware error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Set up webhook
 const secretPath = `/telegraf/${bot.secretPathComponent()}`;
 
-app.post(secretPath, (req, res) => {
-  bot.handleUpdate(req.body, res);
+app.post(secretPath, webhookSecurityMiddleware, (req, res) => {
+  try {
+    bot.handleUpdate(req.body, res);
+  } catch (error) {
+    logger.error('Error handling webhook update:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Webhook path: ${secretPath}`);
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Webhook path: ${secretPath}`);
 });
 
-// Start polling in development
+// Configure webhook or polling based on environment
 if (process.env.NODE_ENV !== 'production') {
-  bot.launch();
-  console.log('Bot started in polling mode');
+  // Start polling in development
+  bot.launch()
+    .then(() => logger.info('Bot started in polling mode'))
+    .catch(err => logger.error('Error starting bot in polling mode:', err));
 } else {
   // Set webhook in production
-  bot.telegram.setWebhook(`${process.env.WEBHOOK_URL}${secretPath}`)
-    .then(() => console.log('Webhook set'))
-    .catch(err => console.error('Webhook setting error:', err));
+  const webhookUrl = process.env.WEBHOOK_URL || `${process.env.WEBHOOK_DOMAIN}${secretPath}`;
+  
+  bot.telegram.setWebhook(webhookUrl)
+    .then(() => {
+      logger.info(`Webhook set to: ${webhookUrl}`);
+      
+      // Get webhook info for verification
+      return bot.telegram.getWebhookInfo();
+    })
+    .then(info => {
+      logger.info('Webhook info:', info);
+    })
+    .catch(err => {
+      logger.error('Webhook setting error:', err);
+    });
 }
 
+// Enhanced error handling for unhandled rejections and exceptions
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+});
+
 // Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', () => {
+  logger.info('SIGINT received. Shutting down gracefully...');
+  bot.stop('SIGINT');
+  process.exit(0);
+});
+
+process.once('SIGTERM', () => {
+  logger.info('SIGTERM received. Shutting down gracefully...');
+  bot.stop('SIGTERM');
+  process.exit(0);
+});
