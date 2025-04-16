@@ -1,0 +1,80 @@
+telegram-logistics-bot/
+│
+├── package.json                 # Node.js project configuration and dependencies
+├── .env.example                 # Example environment variables template
+├── .gitignore                   # Git ignore file
+├── README.md                    # Project documentation
+│
+├── src/                         # Source code
+│   ├── index.js                 # Entry point for the application
+│   │
+│   ├── config/                  # Configuration settings
+│   │   ├── database.js          # Database connection configuration
+│   │   ├── telegram.js          # Telegram bot API configuration
+│   │   └── external-apis.js     # NIN and Geolocation API configurations
+│   │
+│   ├── bot/                     # Bot specific code
+│   │   ├── setup.js             # Bot initialization and webhook setup
+│   │   ├── commands.js          # Command registration and routing
+│   │   ├── middlewares.js       # Bot middlewares (authentication, logging)
+│   │   └── helpers.js           # Common bot helper functions
+│   │
+│   ├── controllers/             # Controllers for handling commands
+│   │   ├── common.controller.js # Common command handlers (start, help)
+│   │   ├── customer.controller.js # Customer-specific commands
+│   │   ├── rider.controller.js  # Rider-specific commands
+│   │   ├── errander.controller.js # Errander-specific commands
+│   │   ├── order.controller.js  # Order management commands
+│   │   ├── errand.controller.js # Errand management commands 
+│   │   ├── group.controller.js  # Group management commands
+│   │   ├── tracking.controller.js # Live tracking commands 
+│   │
+│   ├── services/                # Business logic services
+│   │   ├── user.service.js      # User management (registration, verification)
+│   │   ├── order.service.js     # Order creation and management
+│   │   ├── errand.service.js    # Errand creation and management
+│   │   ├── offer.service.js     # Offer submission and acceptance
+│   │   ├── group.service.js     # Private group creation and management
+│   │   ├── tracking.service.js  # Live location tracking
+│   │   ├── rating.service.js    # Rating and review management
+│   │   ├── notification.service.js # User notifications
+│   │   ├── session.service.js   # Session management for multi-step processes
+│   │   ├── verification.service.js # NIN and bank verification
+│   │   └── geolocation.service.js # Location-based operations
+│   │
+│   ├── models/                  # Database models
+│   │   ├── index.js             # Model associations
+│   │   ├── user.model.js        # User model (riders and erranders)
+│   │   ├── order.model.js       # Order model
+│   │   ├── errand.model.js      # Errand model
+│   │   ├── offer.model.js       # Offer model
+│   │   ├── group.model.js       # Group model
+│   │   ├── session.model.js     # Session model
+│   │   ├── tracking.model.js    # Tracking model
+│   │   └── rating.model.js      # Rating and review model
+│   │
+│   ├── utils/                   # Utility functions
+│   │   ├── error-handler.js     # Centralized error handling
+│   │   ├── logger.js            # Logging utility
+│   │   ├── validators.js        # Input validation functions
+│   │   ├── formatters.js        # Message formatting helpers
+│   │   └── constants.js         # Application constants
+│   │
+│   ├── middleware/              # Express middlewares
+│   │   ├── auth.middleware.js   # Authentication middleware
+│   │   ├── validation.middleware.js # Input validation middleware
+│   │   └── error.middleware.js  # Error handling middleware
+│   │
+│   ├── api/                     # External API integrations
+│   │   ├── nin-verification.js  # NIN verification API client
+│   │   └── geolocation.js       # Geolocation API client
+│   │
+│   ├── db/                      # Database related files
+    │   ├── migrations/          # Database migrations
+    │   └── seeders/             # Database seeders
+    │
+    └── webhooks/                # Webhook handlers
+        ├── index.js             # Webhook router
+        ├── message.webhook.js   # Message webhook handler
+        ├── location.webhook.js  # Location update webhook handler
+        └── callback.webhook.js  # Callback query webhook handler
