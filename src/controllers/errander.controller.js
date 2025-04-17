@@ -2,9 +2,9 @@
  * Errander controller for errander-specific commands and actions
  */
 const logger = require('../utils/logger');
-const db = require('../database');
+const db = require('../config/database');
 const sessionManager = require('../utils/sessionManager');
-const ninVerificationService = require('../services/ninVerificationService');
+const ninVerificationService = require('../services/verification.service');
 
 /**
  * Start the registration process for an errander

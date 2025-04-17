@@ -1,4 +1,4 @@
-const db = require('../database');
+const db = require('../config/database');
 const telegramUtils = require('../utils/telegramUtils');
 const CustomError = require('../utils/customError');
 const logger = require('../utils/logger');

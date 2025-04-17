@@ -3,10 +3,10 @@
  */
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
-const db = require('../database');
+const db = require('../config/database');
 const sessionManager = require('../utils/sessionManager');
-const geolocationService = require('../services/geolocationService');
-const offerService = require('../services/offerService');
+const geolocationService = require('../services/geolocation.service');
+const offerService = require('../services/offer.service');
 const { notifyRiders } = require('../utils/telegramUtils');
 
 /**

@@ -2,9 +2,9 @@
  * Tracking controller for handling live tracking commands and flows
  */
 const logger = require('../utils/logger');
-const db = require('../database');
-const geolocationService = require('../services/geolocationService');
-const groupService = require('../services/groupService');
+const db = require('../config/database');
+const geolocationService = require('../services/geolocation.service');
+const groupService = require('../services/group.service');
 const { sendMessage } = require('../utils/telegramUtils');
 
 /**

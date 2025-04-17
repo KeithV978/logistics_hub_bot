@@ -3,7 +3,7 @@
  */
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
-const db = require('../database');
+const db = require('../config/database');
 const sessionManager = require('../utils/sessionManager');
 
 /**
