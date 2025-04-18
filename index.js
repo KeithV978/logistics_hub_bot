@@ -3,7 +3,7 @@
  */
 require('dotenv').config();
 const logger = require('./src/utils/logger');
-const { configureDatabase } = require('./src/config/database');
+const db = require('./src/config/database');
 const { configureTelegram } = require('./src/config/telegram');
 const { configureExternalApis } = require('./src/config/external-apis');
 const { setupBot } = require('./src/bot/setup');
@@ -21,7 +21,7 @@ async function startApplication() {
     logger.info('Starting application');
 
     // Initialize PostgreSQL database
-    const pool = await configureDatabase();
+    const pool = await db.sequelize.authenticate();
     logger.info('Database initialized successfully');
 
     // Load configurations
