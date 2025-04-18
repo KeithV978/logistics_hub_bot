@@ -5,7 +5,7 @@ require('dotenv').config();
 const logger = require('./src/utils/logger');
 const db = require('./src/config/database');
 const { configureTelegram } = require('./src/config/telegram');
-const { configureExternalApis } = require('./src/config/external-apis');
+// const { configureExternalApis } = require('./src/config/external-apis');
 const { setupBot } = require('./src/bot/setup');
 const { registerCommands } = require('./src/bot/commands');
 const errorMiddleware = require('./src/middleware/error.middleware');
@@ -28,11 +28,12 @@ async function startApplication() {
     const telegramConfig = configureTelegram();
     logger.info('Telegram configuration loaded');
 
-    const apiConfig = configureExternalApis();
-    logger.info('External APIs configuration loaded');
+    // const apiConfig = configureExternalApis();
+    // logger.info('External APIs configuration loaded');
 
     // Setup bot and Express app
-    const { bot, app } = setupBot();
+    const { bot, app } = set
+    upBot();
     logger.info('Bot and Express app initialized');
 
     // Apply Telegraf middleware
