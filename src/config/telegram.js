@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
  */
 const configureTelegram = () => {
   try {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const botToken = process.env.BOT_TOKEN;
     const webhookUrl = process.env.WEBHOOK_URL;
 
     if (!botToken) {
