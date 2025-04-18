@@ -38,8 +38,8 @@ async function startApplication() {
 
     // Apply Telegraf middleware
     bot.use(loggingMiddleware);
-    bot.use(validationMiddleware);
-    bot.use(authMiddleware);
+    // bot.use(validationMiddleware);
+    // bot.use(authMiddleware);
     bot.use(errorMiddleware);
     logger.info('Telegraf middleware applied');
 
