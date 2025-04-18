@@ -1,13 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const { Sequelize } = require('sequelize');
-const config = require('../config/database.js');
+const config = require('../../config/database');
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
   host: config.host,
-  dialect: config.dialect,
-  logging: config.logging,
-  pool: config.pool,
+  dialect: "postgres",
+  logging: true,
+  pool: true,
 });
 
 const db = {};
