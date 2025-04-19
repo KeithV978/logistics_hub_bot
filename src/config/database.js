@@ -6,14 +6,17 @@ const { logger } = require('../utils/logger');
 // const config = require('../../config/database');
 
 // Get database configuration from environment variables
-const { 
+const {
+  DB_NAME = 'logistics_hub',
+  DB_USER = 'postgres',
+  DB_PASSWORD = 'postgres',
   DB_HOST = 'localhost',
-    DB_PORT = 5432, 
-DATABASE_URL
+  DB_PORT = 5432,
+  NODE_ENV = 'development'
 } = process.env;
 
 // Create Sequelize instance
-const sequelize = new Sequelize(DATABASE_URL, {
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   host: DB_HOST,
   port: DB_PORT,
   dialect: 'postgres',
