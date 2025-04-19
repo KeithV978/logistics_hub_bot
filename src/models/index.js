@@ -107,7 +107,7 @@ sequelize
     console.error('Unable to connect to the database:', err);
   });
 
-// Sync all models
+// Sync all mothenticate()dels
 // Note: In production, you should use migrations instead of sync
 sequelize.sync({ alter: true }).then(() => {
   console.log('Database & tables created!');

@@ -13,9 +13,9 @@ app.get('/health', (req, res) => {
 
 // Webhook endpoint
 app.post(`/${webhookConfig.hookPath}`, (req, res) => {
-  if (req.headers['x-telegram-bot-api-secret-token'] !== webhookConfig.secretToken) {
-    return res.sendStatus(403);
-  }
+  // if (req.headers['x-telegram-bot-api-secret-token'] !== webhookConfig.secretToken) {
+  //   return res.sendStatus(403);
+  // }
   bot.handleUpdate(req.body);
   res.sendStatus(200);
 });

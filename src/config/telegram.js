@@ -13,7 +13,7 @@ bot.use(session());
 // Webhook configuration
 const webhookConfig = {
   domain: process.env.WEBHOOK_URL,
-  hookPath: '/webhook',
+  hookPath: 'webhook',
   secretToken: process.env.WEBHOOK_SECRET,
 };
 
