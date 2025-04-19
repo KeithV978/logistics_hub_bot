@@ -1,39 +1,28 @@
 {
   "name": "logistics_hub",
   "version": "1.0.0",
-  "description": "Telegram bot for connecting customers with delivery riders and errand runners (or erranders)",
+  "description": "A logistics management system",
   "main": "src/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
   },
   "dependencies": {
-    "axios": "^1.6.2",
-    "cors": "^2.8.5",
-    "crypto": "^1.0.1",
-    "date-fns": "^3.0.6",
-    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "express-rate-limit": "^6.7.0",
-    "geolib": "^3.3.4",
-    "helmet": "^7.0.0",
-    "joi": "^17.9.2",
-    "jsonwebtoken": "^9.0.2",
-    "lodash": "^4.17.21",
-    "node-cache": "^5.1.2",
-    "node-cron": "^3.0.2",
+    "sequelize": "^6.35.2",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.32.1",
-    "telegraf": "^4.12.2",
-    "uuid": "^9.0.0",
-    "winston": "^3.10.0"
+    "winston": "^3.11.0",
+    "morgan": "^1.10.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.4.1",
+    "express-rate-limit": "^7.1.5",
+    "joi": "^17.12.1"
   },
   "devDependencies": {
-    "eslint": "^8.46.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.28.0",
-    "jest": "^29.6.2",
-    "sequelize-cli": "^6.6.1",
-    "supertest": "^6.3.3"
+    "nodemon": "^3.0.3",
+    "jest": "^29.7.0"
   }
 }

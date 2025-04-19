@@ -64,7 +64,7 @@ const allFileTransport = new winston.transports.File({
 
 // Create logger
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  level: process.env.LOG_LEVEL || 'info',
   levels,
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),

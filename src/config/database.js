@@ -2,18 +2,36 @@ require('dotenv').config();
 // const { required } = require('joi');
 const path = require('path');
 const { Sequelize } = require('sequelize');
+const { logger } = require('../utils/logger');
 // const config = require('../../config/database');
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
+// Get database configuration from environment variables
+const {
+  DB_NAME = 'logistics_hub',
+  DB_USER = 'postgres',
+  DB_PASSWORD = 'postgres',
+  DB_HOST = 'localhost',
+  DB_PORT = 5432,
+  NODE_ENV = 'development'
+} = process.env;
+
+// Create Sequelize instance
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
   dialect: 'postgres',
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false // Required for Render's PostgreSQL
-    }
+  logging: (msg) => logger.debug(msg),
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
   },
-  logging: true,
-  pool: true,
+  define: {
+    timestamps: true,
+    underscored: true,
+    freezeTableName: true
+  }
 });
 
 const db = {};
@@ -88,7 +106,21 @@ db.Tracking.belongsTo(db.Errand, { foreignKey: 'errandId', as: 'errand' });
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-module.exports = db;
+// Test database connection
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    logger.info('Database connection has been established successfully.');
+  } catch (error) {
+    logger.error('Unable to connect to the database:', error);
+    throw error;
+  }
+};
+
+module.exports = {
+  sequelize,
+  testConnection
+};
 
 // /**
 //  * PostgreSQL database connection configuration with retry logic
