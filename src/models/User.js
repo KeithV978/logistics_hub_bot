@@ -3,9 +3,9 @@ const sequelize = require('../config/database');
 
 const User = sequelize.define('User', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-    autoIncrement: true,
   },
   telegramId: {
     type: DataTypes.STRING,
@@ -20,8 +20,12 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  role: {
+    type: DataTypes.ENUM('rider', 'errander'),
+    allowNull: false,
+  },
   bankAccountDetails: {
-    type: DataTypes.JSON,
+    type: DataTypes.JSONB,
     allowNull: false,
   },
   photograph: {
@@ -32,13 +36,13 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  role: {
-    type: DataTypes.ENUM('rider', 'errander'),
-    allowNull: false,
-  },
   isVerified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
   },
   rating: {
     type: DataTypes.FLOAT,
@@ -48,16 +52,16 @@ const User = sequelize.define('User', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
-  isActive: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-  },
   vehicleType: {
     type: DataTypes.STRING,
     allowNull: true,
   },
   currentLocation: {
     type: DataTypes.GEOMETRY('POINT'),
+    allowNull: true,
+  },
+  lastLocationUpdate: {
+    type: DataTypes.DATE,
     allowNull: true,
   },
 });

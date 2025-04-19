@@ -3,17 +3,25 @@ const sequelize = require('../config/database');
 
 const Offer = sequelize.define('Offer', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-    autoIncrement: true,
   },
   orderId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
+    references: {
+      model: 'Orders',
+      key: 'id',
+    },
   },
   userId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id',
+    },
   },
   price: {
     type: DataTypes.DECIMAL(10, 2),
@@ -28,5 +36,11 @@ const Offer = sequelize.define('Offer', {
     allowNull: false,
   },
 });
+
+// Add associations
+Offer.associate = (models) => {
+  Offer.belongsTo(models.Order, { foreignKey: 'orderId' });
+  Offer.belongsTo(models.User, { foreignKey: 'userId' });
+};
 
 module.exports = Offer; 

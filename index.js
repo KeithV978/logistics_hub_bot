@@ -1,54 +1,61 @@
 const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
 const { bot, webhookConfig } = require('./src/config/telegram');
 const sequelize = require('./src/config/database');
-require('dotenv').config();
+const botController = require('./src/controllers/botController');
 
 const app = express();
-
-// Middleware
-app.use(helmet());
-app.use(cors());
 app.use(express.json());
-
-// Webhook endpoint
-app.use(webhookConfig.hookPath, express.json(), (req, res, next) => {
-  if (req.headers['x-telegram-bot-api-secret-token'] !== webhookConfig.secretToken) {
-    return res.sendStatus(401);
-  }
-  next();
-}, bot.webhookCallback(webhookConfig.hookPath));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.status(200).json({ status: 'ok' });
+});
+
+// Webhook endpoint
+app.post(`/${webhookConfig.hookPath}`, (req, res) => {
+  if (req.headers['x-telegram-bot-api-secret-token'] !== webhookConfig.secretToken) {
+    return res.sendStatus(403);
+  }
+  bot.handleUpdate(req.body);
+  res.sendStatus(200);
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Application error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
-
-// Start server
-const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
     // Test database connection
     await sequelize.authenticate();
-    console.log('Database connection established successfully.');
+    console.log('Database connection has been established successfully.');
 
-    // Sync database models
-    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
-    console.log('Database models synchronized.');
+    // Sync database
+    await sequelize.sync();
+    console.log('Database synced successfully');
 
-    // Set webhook
-    await bot.telegram.setWebhook(`${webhookConfig.domain}${webhookConfig.hookPath}`);
-    console.log('Webhook set successfully.');
+    // Set webhook in production, use polling in development
+    if (process.env.NODE_ENV === 'production') {
+      await bot.telegram.setWebhook(
+        `${webhookConfig.domain}/${webhookConfig.hookPath}`,
+        {
+          secret_token: webhookConfig.secretToken
+        }
+      );
+      console.log('Webhook set successfully');
+    } else {
+      await bot.launch();
+      console.log('Bot started in polling mode');
 
-    // Start Express server
+      // Enable graceful stop
+      process.once('SIGINT', () => bot.stop('SIGINT'));
+      process.once('SIGTERM', () => bot.stop('SIGTERM'));
+    }
+
+    // Start server
+    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
@@ -58,4 +65,5 @@ async function startServer() {
   }
 }
 
-startServer();
+// Start the server
+startServer(); 

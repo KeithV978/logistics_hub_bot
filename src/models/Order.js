@@ -3,9 +3,9 @@ const sequelize = require('../config/database');
 
 const Order = sequelize.define('Order', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-    autoIncrement: true,
   },
   customerTelegramId: {
     type: DataTypes.STRING,
@@ -16,40 +16,64 @@ const Order = sequelize.define('Order', {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('pending', 'accepted', 'in_progress', 'completed', 'cancelled'),
+    type: DataTypes.ENUM(
+      'pending',
+      'searching',
+      'accepted',
+      'in_progress',
+      'completed',
+      'cancelled',
+      'expired'
+    ),
     defaultValue: 'pending',
   },
   pickupLocation: {
     type: DataTypes.GEOMETRY('POINT'),
-    allowNull: false,
+    allowNull: true, // Null for errands
   },
   dropoffLocation: {
     type: DataTypes.GEOMETRY('POINT'),
-    allowNull: true,
+    allowNull: true, // Null for errands
   },
   errandLocation: {
     type: DataTypes.GEOMETRY('POINT'),
-    allowNull: true,
+    allowNull: true, // Only for errands
   },
   instructions: {
     type: DataTypes.TEXT,
-    allowNull: true,
+    allowNull: false,
   },
-  errandDetails: {
-    type: DataTypes.TEXT,
+  assignedUserId: {
+    type: DataTypes.UUID,
     allowNull: true,
-  },
-  acceptedOfferId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
+    references: {
+      model: 'Users',
+      key: 'id',
+    },
   },
   groupChatId: {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+  },
+  rating: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  review: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   expiresAt: {
     type: DataTypes.DATE,
     allowNull: false,
+  },
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
   },
 });
 
