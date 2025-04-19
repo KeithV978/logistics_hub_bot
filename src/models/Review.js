@@ -1,23 +1,35 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const { sequelize } = require('../config/database');
 
 const Review = sequelize.define('Review', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-    autoIncrement: true,
   },
   orderId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
+    references: {
+      model: 'Orders',
+      key: 'id'
+    }
   },
   reviewerId: {
     type: DataTypes.STRING,
     allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'telegramId'
+    }
   },
   reviewedUserId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
   rating: {
     type: DataTypes.INTEGER,
