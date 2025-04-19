@@ -57,7 +57,7 @@ const User = sequelize.define('User', {
     allowNull: true,
   },
   currentLocation: {
-    type: DataTypes.GEOMETRY('POINT'),
+    type: DataTypes.GEOMETRY,
     allowNull: true,
   },
   lastLocationUpdate: {
