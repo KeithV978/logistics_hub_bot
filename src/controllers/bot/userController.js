@@ -2,11 +2,27 @@ const { Markup } = require('telegraf');
 const { User } = require('../../models');
 const { verifyNIN } = require('../../services/ninVerification');
 
+// Helper function to delete previous message and send new one
+async function sendMessage(ctx, text, extra = {}) {
+  try {
+    // Delete previous bot message if exists
+    if (ctx.session?.lastBotMessageId) {
+      await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
+    }
+    // Send new message and store its ID
+    const message = await ctx.reply(text, extra);
+    ctx.session.lastBotMessageId = message.message_id;
+    return message;
+  } catch (error) {
+    console.error('Error in sendMessage:', error);
+  }
+}
+
 // Profile command handler
 async function handleProfileCommand(ctx) {
   try {
     if (!ctx.state.user) {
-      return ctx.reply('Please register first using /register_rider or /register_errander.');
+      return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
     }
 
     const profileMessage = `
@@ -18,10 +34,10 @@ Your Profile:
 - Active Status: ${ctx.state.user.isActive ? '🟢 Active' : '🔴 Inactive'}
 ${ctx.state.user.role === 'rider' ? `- Vehicle Type: ${ctx.state.user.vehicleType || 'Not specified'}` : ''}
 `;
-    return ctx.reply(profileMessage);
+    return sendMessage(ctx, profileMessage);
   } catch (error) {
     console.error('Error in profile command:', error);
-    return ctx.reply('Sorry, something went wrong. Please try again later.');
+    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
   }
 }
 
@@ -29,7 +45,7 @@ ${ctx.state.user.role === 'rider' ? `- Vehicle Type: ${ctx.state.user.vehicleTyp
 async function handleRegistrationCommand(ctx) {
   try {
     if (ctx.state.user) {
-      return ctx.reply('You are already registered!');
+      return sendMessage(ctx, 'You are already registered!');
     }
 
     const role = ctx.message.text.includes('rider') ? 'rider' : 'errander';
@@ -41,12 +57,12 @@ async function handleRegistrationCommand(ctx) {
       }
     };
 
-    await ctx.reply('Please enter your full name:', {
+    return sendMessage(ctx, 'Please enter your full name:', {
       reply_markup: { remove_keyboard: true }
     });
   } catch (error) {
     console.error('Error in registration command:', error);
-    return ctx.reply('Sorry, something went wrong. Please try again later.');
+    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
   }
 }
 
@@ -56,42 +72,40 @@ async function handleRegistrationProcess(ctx) {
 
   try {
     const { registration } = ctx.session;
-    const messageId = ctx.message.message_id;
-    const prevMessageId = messageId - 1;
 
-    // Try to delete the previous bot message
+    // Try to delete user's message
     try {
-      await ctx.deleteMessage(prevMessageId);
+      await ctx.deleteMessage(ctx.message.message_id).catch(() => {});
     } catch (error) {
-      console.log('Could not delete previous message');
+      console.log('Could not delete user message');
     }
 
     switch (registration.step) {
       case 'fullName':
         registration.fullName = ctx.message.text;
         registration.step = 'phoneNumber';
-        return ctx.reply('Please enter your phone number:');
+        return sendMessage(ctx, 'Please enter your phone number:');
 
       case 'phoneNumber':
         registration.phoneNumber = ctx.message.text;
         registration.step = 'bankDetails';
-        return ctx.reply('Please enter your bank account details (Account number and Bank name):');
+        return sendMessage(ctx, 'Please enter your bank account details (Account number and Bank name):');
 
       case 'bankDetails':
         registration.bankAccountDetails = { details: ctx.message.text };
         registration.step = 'nin';
-        return ctx.reply('Please enter your NIN (National Identification Number):');
+        return sendMessage(ctx, 'Please enter your NIN (National Identification Number):');
 
       case 'nin':
         registration.nin = ctx.message.text;
         
         const ninVerification = await verifyNIN(registration.nin);
         if (!ninVerification.isValid) {
-          return ctx.reply('Invalid NIN. Please enter a valid NIN:');
+          return sendMessage(ctx, 'Invalid NIN. Please enter a valid NIN:');
         }
 
         registration.step = 'photo';
-        return ctx.reply('Please send your photograph:', {
+        return sendMessage(ctx, 'Please send your photograph:', {
           reply_markup: {
             keyboard: [[{ text: '📸 Send Photo', request_contact: false }]],
             resize_keyboard: true,
@@ -103,14 +117,14 @@ async function handleRegistrationProcess(ctx) {
         registration.vehicleType = ctx.message.text;
         await createUser(registration);
         ctx.session = null;
-        return ctx.reply('Registration successful! Your account will be verified soon.', {
+        return sendMessage(ctx, 'Registration successful! Your account will be verified soon.', {
           reply_markup: { remove_keyboard: true }
         });
     }
   } catch (error) {
     console.error('Error in registration process:', error);
     ctx.session = null;
-    return ctx.reply('Sorry, something went wrong during registration. Please try again with /register_rider or /register_errander.', {
+    return sendMessage(ctx, 'Sorry, something went wrong during registration. Please try again with /register_rider or /register_errander.', {
       reply_markup: { remove_keyboard: true }
     });
   }
@@ -125,9 +139,16 @@ async function handleRegistrationPhoto(ctx) {
     const photo = ctx.message.photo[ctx.message.photo.length - 1];
     registration.photograph = photo.file_id;
 
+    // Try to delete user's photo message
+    try {
+      await ctx.deleteMessage(ctx.message.message_id).catch(() => {});
+    } catch (error) {
+      console.log('Could not delete photo message');
+    }
+
     if (registration.role === 'rider') {
       registration.step = 'vehicleType';
-      return ctx.reply('Please specify your vehicle type:', {
+      return sendMessage(ctx, 'Please specify your vehicle type:', {
         reply_markup: {
           keyboard: [
             ['🏍️ Motorcycle', '🚗 Car'],
@@ -141,13 +162,13 @@ async function handleRegistrationPhoto(ctx) {
 
     await createUser(registration);
     ctx.session = null;
-    return ctx.reply('Registration successful! Your account will be verified soon.', {
+    return sendMessage(ctx, 'Registration successful! Your account will be verified soon.', {
       reply_markup: { remove_keyboard: true }
     });
   } catch (error) {
     console.error('Error handling photo:', error);
     ctx.session = null;
-    return ctx.reply('Sorry, something went wrong during registration. Please try again.', {
+    return sendMessage(ctx, 'Sorry, something went wrong during registration. Please try again.', {
       reply_markup: { remove_keyboard: true }
     });
   }

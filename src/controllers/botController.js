@@ -21,10 +21,10 @@ bot.use(async (ctx, next) => {
 bot.command('start', async (ctx) => {
   try {
     if (ctx.state.user) {
-      return ctx.reply('Welcome back! Use /help to see available commands.');
+      return ctx.reply('Welcome to RiderFinder! Use /help to see available commands.');
     }
     return ctx.reply(
-      'Welcome to RiderFinder! Please register as a rider or errander using /register_rider or /register_errander.'
+      'Welcome to RiderFinder! Please register as a rider or errander(errand runner) using /register_rider or /register_errander.'
     );
   } catch (error) {
     console.error('Error in start command:', error);
