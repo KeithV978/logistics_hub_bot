@@ -7,6 +7,22 @@ const { calculateDistance } = require('../utils/location');
 const userController = require('./bot/userController');
 const orderController = require('./bot/orderController');
 
+// Helper function to delete previous message and send new one
+async function sendMessage(ctx, text, extra = {}) {
+  try {
+    // Delete previous bot message if exists
+    if (ctx.session?.lastBotMessageId) {
+      await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
+    }
+    // Send new message and store its ID
+    const message = await ctx.reply(text, extra);
+    ctx.session.lastBotMessageId = message.message_id;
+    return message;
+  } catch (error) {
+    console.error('Error in sendMessage:', error);
+  }
+}
+
 // Middleware to handle user state
 bot.use(async (ctx, next) => {
   if (ctx.from) {
@@ -21,14 +37,79 @@ bot.use(async (ctx, next) => {
 bot.command('start', async (ctx) => {
   try {
     if (ctx.state.user) {
-      return ctx.reply('Welcome to RiderFinder! Use /help to see available commands.');
+      return sendMessage(ctx, 'Welcome back! Use /help to see available commands.', {
+        reply_markup: { remove_keyboard: true }
+      });
     }
-    return ctx.reply(
-      'Welcome to RiderFinder! Please register as a rider or errander(errand runner) using /register_rider or /register_errander.'
+
+    return sendMessage(ctx, 
+      'Welcome to RiderFinder! Please select your role:', {
+        reply_markup: {
+          keyboard: [
+            ['👤 Register as Customer'],
+            ['🏍️ Register as Rider'],
+            ['🛍️ Register as Errander']
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      }
     );
   } catch (error) {
     console.error('Error in start command:', error);
-    return ctx.reply('Sorry, something went wrong. Please try again later.');
+    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.', {
+      reply_markup: { remove_keyboard: true }
+    });
+  }
+});
+
+// Handle role selection
+bot.hears(['👤 Register as Customer', '🏍️ Register as Rider', '🛍️ Register as Errander'], async (ctx) => {
+  try {
+    if (ctx.state.user) {
+      return sendMessage(ctx, 'You are already registered!', {
+        reply_markup: { remove_keyboard: true }
+      });
+    }
+
+    const text = ctx.message.text;
+    let role;
+
+    switch (text) {
+      case '👤 Register as Customer':
+        role = 'customer';
+        break;
+      case '🏍️ Register as Rider':
+        role = 'rider';
+        break;
+      case '🛍️ Register as Errander':
+        role = 'errander';
+        break;
+    }
+
+    ctx.session = {
+      registration: {
+        telegramId: ctx.from.id.toString(),
+        role,
+        step: 'fullName'
+      }
+    };
+
+    // Try to delete user's selection message
+    try {
+      await ctx.deleteMessage(ctx.message.message_id).catch(() => {});
+    } catch (error) {
+      console.log('Could not delete user message');
+    }
+
+    return sendMessage(ctx, 'Please enter your full name:', {
+      reply_markup: { remove_keyboard: true }
+    });
+  } catch (error) {
+    console.error('Error handling role selection:', error);
+    return sendMessage(ctx, 'Sorry, something went wrong. Please try again with /start', {
+      reply_markup: { remove_keyboard: true }
+    });
   }
 });
 
@@ -38,8 +119,6 @@ bot.command('help', async (ctx) => {
 Available commands:
 - /start - Start the bot
 - /help - Show this help message
-- /register_rider - Register as a rider
-- /register_errander - Register as an errander
 - /profile - View your profile
 - /create_order - Create a new logistics order
 - /create_errand - Create a new errand order
@@ -47,7 +126,7 @@ Available commands:
 - /my_offers - View your offers
 - /toggle_active - Toggle your active status
 `;
-  return ctx.reply(helpMessage);
+  return sendMessage(ctx, helpMessage);
 });
 
 // User commands
@@ -85,7 +164,7 @@ bot.on('photo', userController.handleRegistrationPhoto);
 // Error handling
 bot.catch((err, ctx) => {
   console.error('Bot error:', err);
-  return ctx.reply('An error occurred. Please try again later.', {
+  return sendMessage(ctx, 'An error occurred. Please try again later.', {
     reply_markup: { remove_keyboard: true }
   });
 });
