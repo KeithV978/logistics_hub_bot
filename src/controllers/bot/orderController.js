@@ -10,18 +10,18 @@ async function handleCreateOrderCommand(ctx) {
     // }
 
     // Check for existing active orders
-    const existingOrder = await Order.findOne({
-      where: {
-        customerTelegramId: ctx.from.id.toString(),
-        status: {
-          [Op.notIn]: ['completed', 'cancelled']
-        }
-      }
-    });
+    // const existingOrder = await Order.findOne({
+    //   where: {
+    //     customerTelegramId: ctx.from.id.toString(),
+    //     status: {
+    //       [Op.notIn]: ['completed', 'cancelled']
+    //     }
+    //   }
+    // });
 
-    if (existingOrder) {
-      return sendMessage(ctx, 'You already have an active order. Please wait for it to complete before creating a new one. \nUse /track_order to track your order.');
-    }
+    // if (existingOrder) {
+    //   return sendMessage(ctx, 'You already have an active order. Please wait for it to complete before creating a new one. \nUse /track_order to track your order.');
+    // }
 
     // Initialize order creation session
     ctx.session = {
@@ -42,7 +42,7 @@ async function handleCreateOrderCommand(ctx) {
 
   } catch (error) {
     console.error('Error in create order command:', error);
-    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.', {
+    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later: ' +error, {
       reply_markup: { remove_keyboard: true }
     });
   }
