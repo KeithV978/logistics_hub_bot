@@ -11,6 +11,10 @@ const Order = sequelize.define('Order', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  customerName: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   type: {
     type: DataTypes.ENUM('logistics', 'errand'),
     allowNull: false,

@@ -35,6 +35,11 @@ bot.use(async (ctx, next) => {
 
 // Start command
 bot.command('start', async (ctx) => {
+  // Delete previous bot message if exists
+  if (ctx.session?.lastBotMessageId) {
+    await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
+  }
+
   try {
     if (ctx.state.user) {
       return sendMessage(ctx, 'Welcome back! Use /help to see available commands.', {
@@ -43,12 +48,13 @@ bot.command('start', async (ctx) => {
     }
 
     return sendMessage(ctx, 
-      `Welcome to Logistics Hub \n ${ctx.from.first_name ? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect one of the following options to proceed `, {
+      `Welcome to Logistics Hub \n ${ctx.from.first_name !== ""? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect one of the following options to proceed `, {
         reply_markup: {
           inline_keyboard: [
-            [{text:'👤 Customer', callback_data: 'customer'}],
-            [{text:'🏍️ Register as Rider', callback_data: 'rider_register'}],
-            [{text:'🛍️ Register as Errand runner', callback_data: 'errander_register'}]
+            [{text:'🏍️ Initiate Delivery', callback_data: 'customer'}],
+            [{text:'🛍️ Initiate Errand', callback_data: 'customer'}],
+            [{text:'👤 Rider Register', callback_data: 'rider_register'}],
+            [{text:'👤 Errand Runner Register', callback_data: 'errander_register'}]
           ],
           resize_keyboard: true,
           one_time_keyboard: true
@@ -86,7 +92,7 @@ bot.action(/errander_(.+)/, (ctx) => {
   const command = ctx.match[1];
   switch (command) {
     case 'register':
-      return ctx.reply('Welcome Rider...');
+      return ctx.reply('Welcome Errander...');
 
     default: ctx.reply('Invalid command.');
   }
@@ -95,54 +101,54 @@ bot.action(/errander_(.+)/, (ctx) => {
 
 
 // Handle role selection
-bot.hears(['👤 Customer', '🏍️ Register as Rider', '🛍️ Register as Errander'], async (ctx) => {
-  try {
-    if (ctx.state.user) {
-      return sendMessage(ctx, 'You are already registered!', {
-        reply_markup: { remove_keyboard: true }
-      });
-    }
+// bot.hears(['👤 Customer', '🏍️ Register as Rider', '🛍️ Register as Errander'], async (ctx) => {
+//   try {
+//     if (ctx.state.user) {
+//       return sendMessage(ctx, 'You are already registered!', {
+//         reply_markup: { remove_keyboard: true }
+//       });
+//     }
 
-    const text = ctx.message.text;
-    let role;
+//     const text = ctx.message.text;
+//     let role;
 
-    switch (text) {
-      case '👤 Register as Customer':
-        role = 'customer';
-        break;
-      case '🏍️ Register as Rider':
-        role = 'rider';
-        break;
-      case '🛍️ Register as Errander':
-        role = 'errander';
-        break;
-    }
+//     switch (text) {
+//       case '👤 Register as Customer':
+//         role = 'customer';
+//         break;
+//       case '🏍️ Register as Rider':
+//         role = 'rider';
+//         break;
+//       case '🛍️ Register as Errander':
+//         role = 'errander';
+//         break;
+//     }
 
-    ctx.session = {
-      registration: {
-        telegramId: ctx.from.id.toString(),
-        role,
-        step: 'fullName'
-      }
-    };
+//     ctx.session = {
+//       registration: {
+//         telegramId: ctx.from.id.toString(),
+//         role,
+//         step: 'fullName'
+//       }
+//     };
 
-    // Try to delete user's selection message
-    try {
-      await ctx.deleteMessage(ctx.message.message_id).catch(() => {});
-    } catch (error) {
-      console.log('Could not delete user message');
-    }
+//     // Try to delete user's selection message
+//     try {
+//       await ctx.deleteMessage(ctx.message.message_id).catch(() => {});
+//     } catch (error) {
+//       console.log('Could not delete user message');
+//     }
 
-    return sendMessage(ctx, 'Please enter your full name:', {
-      reply_markup: { remove_keyboard: true }
-    });
-  } catch (error) {
-    console.error('Error handling role selection:', error);
-    return sendMessage(ctx, 'Sorry, something went wrong. Please try again with /start', {
-      reply_markup: { remove_keyboard: true }
-    });
-  }
-});
+//     return sendMessage(ctx, 'Please enter your full name:', {
+//       reply_markup: { remove_keyboard: true }
+//     });
+//   } catch (error) {
+//     console.error('Error handling role selection:', error);
+//     return sendMessage(ctx, 'Sorry, something went wrong. Please try again with /start', {
+//       reply_markup: { remove_keyboard: true }
+//     });
+//   }
+// });
 
 // Help command
 bot.command('help', async (ctx) => {
