@@ -67,16 +67,16 @@ bot.action(/delivery_(.+)/, (ctx) => {
  
 
 });
-bot.action(/errand_(.+)/, (ctx) => {
-  const command = ctx.match[1];
-  // Execute the corresponding command 
-  switch (command) {
-    case 'create':
-      return orderController.handleCreateErrandCommand(ctx);
-    default: orderController.handleFetchOrderCommand(ctx);
-  }
+// bot.action(/errand_(.+)/, (ctx) => {
+//   const command = ctx.match[1];
+//   // Execute the corresponding command 
+//   switch (command) {
+//     case 'create':
+//       return orderController.handleCreateErrandCommand(ctx);
+//     default: orderController.handleFetchOrderCommand(ctx);
+//   }
 
-});
+// });
 // Handle callback queries
 bot.action(/rider_(.+)/, (ctx) => {
   const command = ctx.match[1];
@@ -88,15 +88,15 @@ bot.action(/rider_(.+)/, (ctx) => {
   } 
 })
 // Handle callback queries
-bot.action(/errander_(.+)/, (ctx) => {
-  const command = ctx.match[1];
-  switch (command) {
-    case 'register':
-      return ctx.reply('Welcome Errander...');
+// bot.action(/errander_(.+)/, (ctx) => {
+//   const command = ctx.match[1];
+//   switch (command) {
+//     case 'register':
+//       return ctx.reply('Welcome Errander...');
 
-    default: userController.handleRegistrationProcess(ctx);
-  }
-})
+//     default: userController.handleRegistrationProcess(ctx);
+//   }
+// })
 
 
 
