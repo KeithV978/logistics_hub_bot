@@ -5,27 +5,27 @@ const { sendMessage } = require('../../utils/sendMessage');
  
 
 // Profile command handler
-async function handleProfileCommand(ctx) {
-  try {
-    if (!ctx.state.user) {
-      return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
-    }
+// async function handleProfileCommand(ctx) {
+//   try {
+//     if (!ctx.state.user) {
+//       return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
+//     }
 
-    const profileMessage = `
-Your Profile:
-- Name: ${ctx.state.user.fullName}
-- Role: ${ctx.state.user.role}
-- Rating: ${ctx.state.user.rating.toFixed(1)} (${ctx.state.user.totalRatings} ratings)
-- Verification Status: ${ctx.state.user.isVerified ? '✅ Verified' : '❌ Not Verified'}
-- Active Status: ${ctx.state.user.isActive ? '🟢 Active' : '🔴 Inactive'}
-${ctx.state.user.role === 'rider' ? `- Vehicle Type: ${ctx.state.user.vehicleType || 'Not specified'}` : ''}
-`;
-    return sendMessage(ctx, profileMessage);
-  } catch (error) {
-    console.error('Error in profile command:', error);
-    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
-  }
-}
+//     const profileMessage = `
+// Your Profile:
+// - Name: ${ctx.state.user.fullName}
+// - Role: ${ctx.state.user.role}
+// - Rating: ${ctx.state.user.rating.toFixed(1)} (${ctx.state.user.totalRatings} ratings)
+// - Verification Status: ${ctx.state.user.isVerified ? '✅ Verified' : '❌ Not Verified'}
+// - Active Status: ${ctx.state.user.isActive ? '🟢 Active' : '🔴 Inactive'}
+// ${ctx.state.user.role === 'rider' ? `- Vehicle Type: ${ctx.state.user.vehicleType || 'Not specified'}` : ''}
+// `;
+//     return sendMessage(ctx, profileMessage);
+//   } catch (error) {
+//     console.error('Error in profile command:', error);
+//     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
+//   }
+// }
 
 // Registration command handler
 async function handleRegistrationCommand(ctx) {
@@ -120,7 +120,30 @@ Please enter your bank name:`;
       return ctx.wizard.next(); 
       
     },
-    // Step 8 - NIN
+      // Step 8 - Vehicle Type Selection
+     async (ctx) => {
+      const summary = `Signup details:
+Full Name: ${ctx.wizard.state.fullName}
+Role: ${ctx.wizard.state.role}
+Email: ${ctx.wizard.state.email}
+Phone: ${ctx.wizard.state.phoneNumber}
+Bank Account Number: ${ctx.wizard.state.bankAccountNumber}
+Bank Name: ${ctx.wizard.state.bankName}
+Account Name: ${ctx.wizard.state.accountName}
+      
+Please select your vehicle type:`;
+      await sendMessage(ctx, summary, {
+        reply_markup: {
+          keyboard: [
+            ['🚲 Bicycle', '🏍️ Motorcycle', '🚗 Car', '🚚 Van', '🚛 Truck']
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+      return ctx.wizard.next();
+    },
+    // Step 9 - NIN
     async (ctx) => { 
       const summary = `Signup details:
       Full Name: ${ctx.wizard.state.fullName}
@@ -134,7 +157,7 @@ Please enter your bank name:`;
       await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
-    // Step 9 - Documents
+    // Step 10 - Documents
     async (ctx) => {
       const summary = `Signup details:
       Full Name: ${ctx.wizard.state.fullName}
@@ -330,7 +353,7 @@ async function createUser(data) {
     telegramId: data.telegramId,
     fullName: data.fullName,
     phoneNumber: data.phoneNumber,
-    bankAccountDetails: data.bankAccountDetails,
+    bankAccountDetails: {bankName: data.bankName, accountNumber: data.bankAccountNumber, accountName: data.accountName},
     photograph: data.photograph,
     nin: data.nin,
     role: data.role,
