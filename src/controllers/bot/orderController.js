@@ -5,14 +5,29 @@ const { sendMessage } = require('../../utils/sendMessage');
 // Create logistics order command handler
 async function handleCreateOrderCommand(ctx) {
   try {
-    if (!ctx.state.user) {
-      return sendMessage(ctx, 'Please register first using as a rider or errand runner');
+    // if (!ctx.state.user) {
+    //   return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
+    // }
+
+    // Check for existing active orders
+    const existingOrder = await Order.findOne({
+      where: {
+        customerTelegramId: ctx.from.id.toString(),
+        status: {
+          [Op.notIn]: ['completed', 'cancelled']
+        }
+      }
+    });
+
+    if (existingOrder) {
+      return sendMessage(ctx, 'You already have an active order. Please wait for it to complete before creating a new one. \nUse /track_order to track your order.');
     }
 
+    // Initialize order creation session
     ctx.session = {
       orderCreation: {
         type: 'logistics',
-        step: 'pickup',
+        step: 'pickup_location',
         customerTelegramId: ctx.from.id.toString()
       }
     };
@@ -24,6 +39,7 @@ async function handleCreateOrderCommand(ctx) {
         one_time_keyboard: true
       }
     });
+
   } catch (error) {
     console.error('Error in create order command:', error);
     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.', {
@@ -31,6 +47,25 @@ async function handleCreateOrderCommand(ctx) {
     });
   }
 }
+
+async function handleFetchOrderCommand(ctx){
+  const orders = await Order.findAll({
+    where: {
+      customerTelegramId: ctx.from.id.toString()
+    },
+    order: [['createdAt', 'DESC']]
+  });
+
+  if (orders.length === 0) {
+    return sendMessage(ctx, 'You have no previous orders.');
+  }
+
+  const ordersList = orders.map(order => 
+    `Order #${order.id}\nStatus: ${order.status}\nCreated: ${order.createdAt.toLocaleDateString()}`
+  ).join('\n\n');
+
+  return sendMessage(ctx, `Your orders:\n\n${ordersList}`);
+  }
 
 // Create errand command handler
 async function handleCreateErrandCommand(ctx) {
@@ -60,8 +95,7 @@ async function handleCreateErrandCommand(ctx) {
       reply_markup: { remove_keyboard: true }
     });
   }
-}
-
+} 
 // Handle location updates for orders
 async function handleOrderLocation(ctx) {
   if (!ctx.session?.orderCreation) return;
@@ -112,7 +146,6 @@ async function handleOrderLocation(ctx) {
     });
   }
 }
-
 // Handle order instructions
 async function handleOrderInstructions(ctx) {
   if (!ctx.session?.orderCreation || ctx.session.orderCreation.step !== 'instructions') return;

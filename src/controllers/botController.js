@@ -61,10 +61,8 @@ bot.action(/delivery_(.+)/, (ctx) => {
   // Execute the corresponding command 
   switch (command) {
     case 'create':
-      return orderController.handleCreateOrderCommand(ctx);
-      case 'location':
-        return orderController.handleOrderLocation(ctx);
-    default: orderController.handleCreateOrderCommand(ctx);
+      return orderController.handleCreateOrderCommand(ctx); 
+    default: orderController.handleFetchOrderCommand(ctx);
   }
  
 
@@ -75,9 +73,7 @@ bot.action(/errand_(.+)/, (ctx) => {
   switch (command) {
     case 'create':
       return orderController.handleCreateErrandCommand(ctx);
-    case 'location':
-      return orderController.handleOrderLocation(ctx);
-    default: orderController.handleCreateErrandCommand(ctx);
+    default: orderController.handleFetchOrderCommand(ctx);
   }
 
 });
