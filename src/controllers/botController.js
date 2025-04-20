@@ -6,7 +6,7 @@ const { verifyNIN } = require('../services/ninVerification');
 const { calculateDistance } = require('../utils/location');
 const userController = require('./bot/userController');
 const orderController = require('./bot/orderController');
-
+const userGreeting =require('../utils/Greeting')
 // Helper function to delete previous message and send new one
 async function sendMessage(ctx, text, extra = {}) {
   try {
@@ -43,7 +43,7 @@ bot.command('start', async (ctx) => {
     }
 
     return sendMessage(ctx, 
-      `Welcome to Logistics Hub ${ctx.from.first_name}! :`, {
+      `Welcome to Logistics Hub ${ctx.from.first_name ? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect on of the following options to proceed `, {
         reply_markup: {
           inline_keyboard: [
             [{text:'👤 Customer', callback_data: 'customer'}],
