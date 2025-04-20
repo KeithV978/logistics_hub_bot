@@ -43,12 +43,12 @@ bot.command('start', async (ctx) => {
     }
 
     return sendMessage(ctx, 
-      'Welcome to RiderFinder! Please select your role:', {
+      'Welcome Victor! :', {
         reply_markup: {
-          keyboard: [
-            ['👤 Register as Customer'],
-            ['🏍️ Register as Rider'],
-            ['🛍️ Register as Errander']
+          inline_keyboard: [
+            [{text:'👤 Customer', callback_data: 'command_customer'}, {text:'🏍️ Register as Rider', callback_data: 'command_rider'}],
+           
+            [{text:'🛍️ Register as Errander', callback_data: 'command_errander'}]
           ],
           resize_keyboard: true,
           one_time_keyboard: true
@@ -64,7 +64,7 @@ bot.command('start', async (ctx) => {
 });
 
 // Handle role selection
-bot.hears(['👤 Register as Customer', '🏍️ Register as Rider', '🛍️ Register as Errander'], async (ctx) => {
+bot.hears(['👤 Customer', '🏍️ Register as Rider', '🛍️ Register as Errander'], async (ctx) => {
   try {
     if (ctx.state.user) {
       return sendMessage(ctx, 'You are already registered!', {
