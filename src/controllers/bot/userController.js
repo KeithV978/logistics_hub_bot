@@ -2,7 +2,7 @@ const { Markup, Scenes } = require('telegraf');
 const { User } = require('../../models');
 const { verifyNIN } = require('../../services/ninVerification');
 const { sendMessage } = require('../../utils/sendMessage');
- 
+const { bot } = require('../../config/telegram');
 
 // Profile command handler
 // async function handleProfileCommand(ctx) {
