@@ -366,6 +366,5 @@ async function createUser(data) {
 }
 
 module.exports = {
-  handleProfileCommand,
   handleRegistrationCommand,  
 }; 
