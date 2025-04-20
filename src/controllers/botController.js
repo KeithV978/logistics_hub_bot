@@ -37,8 +37,8 @@ bot.command('start', async (ctx) => {
       `Welcome to Logistics Hub \n ${ctx.from.first_name !== ""? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect one of the following options to proceed `, {
         reply_markup: {
           inline_keyboard: [
-            [{text:'🏍️ Create Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
-            [{text:'🛍️ Create Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
+            [{text:'Create Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
+            [{text:'Create Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
             [{text:'👤 Rider Register', callback_data: 'rider'}],
             [{text:'👤 Errand Runner Register', callback_data: 'errander'}]
           ],
