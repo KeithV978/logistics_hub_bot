@@ -1,4 +1,4 @@
-const { Markup } = require('telegraf');
+const { Markup, Scenes } = require('telegraf');
 const { User } = require('../../models');
 const { verifyNIN } = require('../../services/ninVerification');
 const { sendMessage } = require('../../utils/sendMessage');
@@ -29,89 +29,90 @@ ${ctx.state.user.role === 'rider' ? `- Vehicle Type: ${ctx.state.user.vehicleTyp
 
 // Registration command handler
 async function handleRegistrationCommand(ctx) {
-const { Scenes } = require('telegraf');
+  console.log('Registration command received');
+  // Create registration wizard scene
+  const registrationWizard = new Scenes.WizardScene(
+    'registration',
+    // Step 1 - Full Name
+    async (ctx) => {
+      await sendMessage(ctx, 'Please enter your full name:');
+      return ctx.wizard.next();
+    },
+    // Step 2 - Email
+    async (ctx) => {
+      ctx.wizard.state.fullName = ctx.message.text;
+      await sendMessage(ctx, 'Please enter your email address:');
+      return ctx.wizard.next();
+    },
+    // Step 3 - Phone Number  
+    async (ctx) => {
+      ctx.wizard.state.email = ctx.message.text;
+      await sendMessage(ctx, 'Please enter your phone number:');
+      return ctx.wizard.next();
+    },
+    // Step 4 - Bank Details
+    async (ctx) => {
+      ctx.wizard.state.phoneNumber = ctx.message.text;
+      await sendMessage(ctx, 'Please enter your bank account number:');
+      return ctx.wizard.next();
+    },
+    // Step 5 - Bank Name
+    async (ctx) => {
+      ctx.wizard.state.bankAccountNumber = ctx.message.text;
+      await sendMessage(ctx, 'Please enter your bank name:');
+      return ctx.wizard.next();
+    },
+    // Step 6 - Account Name
+    async (ctx) => {
+      ctx.wizard.state.bankName = ctx.message.text;
+      await sendMessage(ctx, 'Please enter the account name:');
+      return ctx.wizard.next();
+    },
+    // Step 7 - NIN
+    async (ctx) => {
+      ctx.wizard.state.accountName = ctx.message.text;
+      await sendMessage(ctx, 'Please enter your NIN (National Identification Number):');
+      return ctx.wizard.next();
+    },
+    // Step 8 - Documents
+    async (ctx) => {
+      ctx.wizard.state.nin = ctx.message.text;
+      await sendMessage(ctx, 'Please upload the required documents (ID card, proof of address, etc.):');
+      return ctx.wizard.next();
+    },
+    // Final Step - Create User
+    async (ctx) => {
+      try {
+        const userData = {
+          telegramId: ctx.from.id.toString(),
+          fullName: ctx.wizard.state.fullName,
+          email: ctx.wizard.state.email,
+          phoneNumber: ctx.wizard.state.phoneNumber,
+          bankAccountDetails: {
+            accountNumber: ctx.wizard.state.bankAccountNumber,
+            bankName: ctx.wizard.state.bankName,
+            accountName: ctx.wizard.state.accountName
+          },
+          nin: ctx.wizard.state.nin,
+          role: ctx.wizard.state.role || 'user',
+          documents: ctx.message.document ? ctx.message.document.file_id : null
+        };
 
-// Create registration wizard scene
-const registrationWizard = new Scenes.WizardScene(
-  'registration',
-  // Step 1 - Full Name
-  async (ctx) => {
-    await sendMessage(ctx, 'Please enter your full name:');
-    return ctx.wizard.next();
-  },
-  // Step 2 - Email
-  async (ctx) => {
-    ctx.wizard.state.fullName = ctx.message.text;
-    await sendMessage(ctx, 'Please enter your email address:');
-    return ctx.wizard.next();
-  },
-  // Step 3 - Phone Number  
-  async (ctx) => {
-    ctx.wizard.state.email = ctx.message.text;
-    await sendMessage(ctx, 'Please enter your phone number:');
-    return ctx.wizard.next();
-  },
-  // Step 4 - Bank Details
-  async (ctx) => {
-    ctx.wizard.state.phoneNumber = ctx.message.text;
-    await sendMessage(ctx, 'Please enter your bank account number:');
-    return ctx.wizard.next();
-  },
-  // Step 5 - Bank Name
-  async (ctx) => {
-    ctx.wizard.state.bankAccountNumber = ctx.message.text;
-    await sendMessage(ctx, 'Please enter your bank name:');
-    return ctx.wizard.next();
-  },
-  // Step 6 - Account Name
-  async (ctx) => {
-    ctx.wizard.state.bankName = ctx.message.text;
-    await sendMessage(ctx, 'Please enter the account name:');
-    return ctx.wizard.next();
-  },
-  // Step 7 - NIN
-  async (ctx) => {
-    ctx.wizard.state.accountName = ctx.message.text;
-    await sendMessage(ctx, 'Please enter your NIN (National Identification Number):');
-    return ctx.wizard.next();
-  },
-  // Step 8 - Documents
-  async (ctx) => {
-    ctx.wizard.state.nin = ctx.message.text;
-    await sendMessage(ctx, 'Please upload the required documents (ID card, proof of address, etc.):');
-    return ctx.wizard.next();
-  },
-  // Final Step - Create User
-  async (ctx) => {
-    try {
-      const userData = {
-        telegramId: ctx.from.id.toString(),
-        fullName: ctx.wizard.state.fullName,
-        email: ctx.wizard.state.email,
-        phoneNumber: ctx.wizard.state.phoneNumber,
-        bankAccountDetails: {
-          accountNumber: ctx.wizard.state.bankAccountNumber,
-          bankName: ctx.wizard.state.bankName,
-          accountName: ctx.wizard.state.accountName
-        },
-        nin: ctx.wizard.state.nin,
-        role: ctx.wizard.state.role || 'user',
-        documents: ctx.message.document ? ctx.message.document.file_id : null
-      };
-
-      const user = await createUser(userData);
-      await sendMessage(ctx, 'Registration completed successfully! Use /profile to view your details.');
-      return ctx.scene.leave();
-    } catch (error) {
-      console.error('Error creating user:', error);
-      await sendMessage(ctx, 'Sorry, something went wrong during registration. Please try again.');
-      return ctx.scene.leave();
+        const user = await createUser(userData);
+        await sendMessage(ctx, 'Registration completed successfully! Use /profile to view your details.');
+        return ctx.scene.leave();
+      } catch (error) {
+        console.error('Error creating user:', error);
+        await sendMessage(ctx, 'Sorry, something went wrong during registration. Please try again.');
+        return ctx.scene.leave();
+      }
     }
-  }
-);
+  );
 
-// Handler for registration command
-async function handleRegistrationCommand(ctx) {
+  // Set up the stage with the wizard
+  const stage = new Scenes.Stage([registrationWizard]);
+  bot.use(stage.middleware());
+
   try {
     const existingUser = await User.findOne({
       where: { telegramId: ctx.from.id.toString() }
@@ -126,8 +127,7 @@ async function handleRegistrationCommand(ctx) {
     console.error('Error in registration command:', error);
     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
   }
-}
-}
+} 
 
 // Registration process handler
 // async function handleRegistrationProcess(ctx) {

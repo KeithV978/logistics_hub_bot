@@ -39,8 +39,9 @@ bot.command('start', async (ctx) => {
           inline_keyboard: [
             [{text:'Create Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
             [{text:'Create Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
-            [{text:'👤 Rider Register', callback_data: 'rider'}],
-            [{text:'👤 Errand Runner Register', callback_data: 'errander'}]
+            [{text:'📝 Rider Signup', callback_data: 'rider'}],
+            [{text:'📝 Errand Runner Signup', callback_data: 'errander'}],
+            [{text:'👤 Profile', callback_data: 'profile'}],
           ],
           resize_keyboard: true,
           one_time_keyboard: true
