@@ -28,11 +28,10 @@ const { bot } = require('../../config/telegram');
 // }
 
 // Registration command handler
-async function handleRegistrationCommand(ctx) {
-  console.log('Registration command received');
+async function handleRegistrationCommand(ctx) { 
   // Create registration wizard scene
   const registrationWizard = new Scenes.WizardScene(
-    'registration',
+    'registration-wizard',
     // Step 1 - Full Name
     async (ctx) => {
       const summary = `Signup details:
@@ -175,6 +174,13 @@ Please select your vehicle type:`;
     // Final Step - Create User
     async (ctx) => {
       try {
+        // Verify NIN before creating user
+        const ninVerification = await verifyNIN(ctx.wizard.state.nin);
+        if (!ninVerification.isValid) {
+          await sendMessage(ctx, 'Invalid NIN. Please start the registration process again.');
+          return ctx.scene.leave();
+        }
+
         const userData = {
           telegramId: ctx.from.id.toString(),
           fullName: ctx.wizard.state.fullName,
@@ -205,7 +211,7 @@ Please select your vehicle type:`;
   const stage = new Scenes.Stage([registrationWizard]);
   bot.use(stage.middleware());
 
-  try {
+  try { 
     const existingUser = await User.findOne({
       where: { telegramId: ctx.from.id.toString() }
     });
@@ -214,7 +220,7 @@ Please select your vehicle type:`;
       return sendMessage(ctx, 'You are already registered!');
     }
 
-    await ctx.scene.enter('registration');
+    await ctx.scene?.enter('registration-wizard');
   } catch (error) {
     console.error('Error in registration command:', error);
     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
