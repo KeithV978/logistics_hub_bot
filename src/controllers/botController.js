@@ -63,6 +63,37 @@ bot.command('start', async (ctx) => {
   }
 });
 
+// Handle callback queries
+bot.action(/customer/, (ctx) => {
+  // const command = ctx.match[1];
+  // Execute the corresponding command 
+    return ctx.reply('Hi customer');
+
+});
+
+// Handle callback queries
+bot.action(/rider_(.+)/, (ctx) => {
+  const command = ctx.match[1];
+  switch (command) {
+    case 'register':
+      return ctx.reply('Welcome Rider...');
+
+      default: ctx.reply('Invalid command.');
+  } 
+})
+// Handle callback queries
+bot.action(/errander_(.+)/, (ctx) => {
+  const command = ctx.match[1];
+  switch (command) {
+    case 'register':
+      return ctx.reply('Welcome Rider...');
+
+    default: ctx.reply('Invalid command.');
+  }
+})
+
+
+
 // Handle role selection
 bot.hears(['👤 Customer', '🏍️ Register as Rider', '🛍️ Register as Errander'], async (ctx) => {
   try {
