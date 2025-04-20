@@ -35,49 +35,118 @@ async function handleRegistrationCommand(ctx) {
     'registration',
     // Step 1 - Full Name
     async (ctx) => {
-      await sendMessage(ctx, 'Please enter your full name:');
+      const summary = `Signup details:
+No information yet.
+
+Please enter your full name (Surname FirstName):`;
+      await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
-    // Step 2 - Email
+    // Step 2 - Role Selection
     async (ctx) => {
-      ctx.wizard.state.fullName = ctx.message.text;
-      await sendMessage(ctx, 'Please enter your email address:');
+      const summary = `Signup details:
+Full Name: ${ctx.wizard.state.fullName}
+
+Please select your role:`;
+      await sendMessage(ctx, summary, {
+        reply_markup: {
+          keyboard: [
+            ['🏍️ Rider', '🛍️ Errander']
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
       return ctx.wizard.next();
     },
-    // Step 3 - Phone Number  
+    // Step 3 - Email
     async (ctx) => {
-      ctx.wizard.state.email = ctx.message.text;
-      await sendMessage(ctx, 'Please enter your phone number:');
+      const summary = `Signup details:
+Full Name: ${ctx.wizard.state.fullName}
+Role: ${ctx.wizard.state.role}
+
+Please enter your email address:`;
+      await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
-    // Step 4 - Bank Details
+    // Step 4 - Phone Number
     async (ctx) => {
-      ctx.wizard.state.phoneNumber = ctx.message.text;
-      await sendMessage(ctx, 'Please enter your bank account number:');
+      const summary = `Signup details:
+Full Name: ${ctx.wizard.state.fullName}
+Role: ${ctx.wizard.state.role}
+Email: ${ctx.wizard.state.email}
+
+Please enter your phone number:`;
+      await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
-    // Step 5 - Bank Name
+    // Step 5 - Bank Account Number
     async (ctx) => {
-      ctx.wizard.state.bankAccountNumber = ctx.message.text;
-      await sendMessage(ctx, 'Please enter your bank name:');
+      const summary = `Signup details:
+Full Name: ${ctx.wizard.state.fullName}
+Role: ${ctx.wizard.state.role}
+Email: ${ctx.wizard.state.email}
+Phone: ${ctx.wizard.state.phoneNumber}
+
+Please enter your bank account number:`;
+      await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
-    // Step 6 - Account Name
+       
+    // Step 6 - Bank Name
     async (ctx) => {
-      ctx.wizard.state.bankName = ctx.message.text;
-      await sendMessage(ctx, 'Please enter the account name:');
+      const summary = `Signup details:
+Full Name: ${ctx.wizard.state.fullName}
+Role: ${ctx.wizard.state.role}
+Email: ${ctx.wizard.state.email}
+Phone: ${ctx.wizard.state.phoneNumber}
+Bank Account Number: ${ctx.wizard.state.bankAccountNumber}
+Please enter your bank name:`;
+      await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
-    // Step 7 - NIN
+         
+    // Step 7 - Account Name
     async (ctx) => {
-      ctx.wizard.state.accountName = ctx.message.text;
-      await sendMessage(ctx, 'Please enter your NIN (National Identification Number):');
+      const summary = `Signup details:
+      Full Name: ${ctx.wizard.state.fullName}
+      Role: ${ctx.wizard.state.role}
+      Email: ${ctx.wizard.state.email}
+      Phone: ${ctx.wizard.state.phoneNumber}
+      Bank Account Number: ${ctx.wizard.state.bankAccountNumber}
+      Bank Name: ${ctx.wizard.state.bankName}
+      Please enter your account name:`;
+      await sendMessage(ctx, summary);
+      return ctx.wizard.next(); 
+      
+    },
+    // Step 8 - NIN
+    async (ctx) => { 
+      const summary = `Signup details:
+      Full Name: ${ctx.wizard.state.fullName}
+      Role: ${ctx.wizard.state.role}
+      Email: ${ctx.wizard.state.email}
+      Phone: ${ctx.wizard.state.phoneNumber}
+      Bank Account Number: ${ctx.wizard.state.bankAccountNumber}
+      Bank Name: ${ctx.wizard.state.bankName}
+      Account Name: ${ctx.wizard.state.accountName}
+      Please enter your NIN:`;
+      await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
-    // Step 8 - Documents
+    // Step 9 - Documents
     async (ctx) => {
-      ctx.wizard.state.nin = ctx.message.text;
-      await sendMessage(ctx, 'Please upload the required documents (ID card, proof of address, etc.):');
+      const summary = `Signup details:
+      Full Name: ${ctx.wizard.state.fullName}
+      Role: ${ctx.wizard.state.role}
+      Email: ${ctx.wizard.state.email}
+      Phone: ${ctx.wizard.state.phoneNumber}
+      Bank Account Number: ${ctx.wizard.state.bankAccountNumber}
+      Bank Name: ${ctx.wizard.state.bankName}
+      Account Name: ${ctx.wizard.state.accountName}
+      NIN: ${ctx.wizard.state.nin}
+      Please upload your Eligibility slip:`;
+      await sendMessage(ctx, summary);
       return ctx.wizard.next();
     },
     // Final Step - Create User
@@ -94,7 +163,7 @@ async function handleRegistrationCommand(ctx) {
             accountName: ctx.wizard.state.accountName
           },
           nin: ctx.wizard.state.nin,
-          role: ctx.wizard.state.role || 'user',
+          role: ctx.wizard.state.role,
           documents: ctx.message.document ? ctx.message.document.file_id : null
         };
 

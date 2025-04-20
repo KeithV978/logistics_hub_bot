@@ -57,17 +57,17 @@ bot.command('start', async (ctx) => {
 });
 
 // Handle callback queries
-bot.action(/delivery_(.+)/, (ctx) => {
-  const command = ctx.match[1];
-  // Execute the corresponding command 
-  switch (command) {
-    case 'create':
-      return orderController.handleCreateOrderCommand(ctx); 
-    default: orderController.handleFetchOrderCommand(ctx);
-  }
+// bot.action(/delivery_(.+)/, (ctx) => {
+//   const command = ctx.match[1];
+//   // Execute the corresponding command 
+//   switch (command) {
+//     case 'create':
+//       return orderController.handleCreateOrderCommand(ctx); 
+//     default: orderController.handleFetchOrderCommand(ctx);
+//   }
  
 
-});
+// });
 // bot.action(/errand_(.+)/, (ctx) => {
 //   const command = ctx.match[1];
 //   // Execute the corresponding command 
