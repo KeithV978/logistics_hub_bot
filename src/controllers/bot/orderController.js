@@ -1,27 +1,12 @@
 const { Markup } = require('telegraf');
 const { Order } = require('../../models');
-
-// Helper function to delete previous message and send new one
-async function sendMessage(ctx, text, extra = {}) {
-  try {
-    // Delete previous bot message if exists
-    if (ctx.session?.lastBotMessageId) {
-      await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
-    }
-    // Send new message and store its ID
-    const message = await ctx.reply(text, extra);
-    ctx.session.lastBotMessageId = message.message_id;
-    return message;
-  } catch (error) {
-    console.error('Error in sendMessage:', error);
-  }
-}
+const { sendMessage } = require('../../utils/sendMessage');
 
 // Create logistics order command handler
 async function handleCreateOrderCommand(ctx) {
   try {
     if (!ctx.state.user) {
-      return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
+      return sendMessage(ctx, 'Please register first using as a rider or errand runner');
     }
 
     ctx.session = {

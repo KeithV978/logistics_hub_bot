@@ -7,21 +7,7 @@ const { calculateDistance } = require('../utils/location');
 const userController = require('./bot/userController');
 const orderController = require('./bot/orderController');
 const userGreeting =require('../utils/Greeting')
-// Helper function to delete previous message and send new one
-async function sendMessage(ctx, text, extra = {}) {
-  try {
-    // Delete previous bot message if exists
-    if (ctx.session?.lastBotMessageId) {
-      await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
-    }
-    // Send new message and store its ID
-    const message = await ctx.reply(text, extra);
-    ctx.session.lastBotMessageId = message.message_id;
-    return message;
-  } catch (error) {
-    console.error('Error in sendMessage:', error);
-  }
-}
+const { sendMessage } = require('../utils/sendMessage');
 
 // Middleware to handle user state
 bot.use(async (ctx, next) => {
@@ -36,9 +22,9 @@ bot.use(async (ctx, next) => {
 // Start command
 bot.command('start', async (ctx) => {
   // Delete previous bot message if exists
-  if (ctx.session?.lastBotMessageId) {
-    await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
-  }
+  // if (ctx.session?.lastBotMessageId) {
+  //   await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
+  // }
 
   try {
     if (ctx.state.user) {
@@ -51,10 +37,10 @@ bot.command('start', async (ctx) => {
       `Welcome to Logistics Hub \n ${ctx.from.first_name !== ""? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect one of the following options to proceed `, {
         reply_markup: {
           inline_keyboard: [
-            [{text:'🏍️ Initiate Delivery', callback_data: 'customer'}],
-            [{text:'🛍️ Initiate Errand', callback_data: 'customer'}],
-            [{text:'👤 Rider Register', callback_data: 'rider_register'}],
-            [{text:'👤 Errand Runner Register', callback_data: 'errander_register'}]
+            [{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
+            [{text:'🛍️ My Errands', callback_data: 'errand'}],
+            [{text:'👤 Rider Register', callback_data: 'rider'}],
+            [{text:'👤 Errand Runner Register', callback_data: 'errander'}]
           ],
           resize_keyboard: true,
           one_time_keyboard: true
@@ -70,13 +56,31 @@ bot.command('start', async (ctx) => {
 });
 
 // Handle callback queries
-bot.action(/customer/, (ctx) => {
-  // const command = ctx.match[1];
+bot.action(/delivery/, (ctx) => {
+  const command = ctx.match[1];
   // Execute the corresponding command 
-    return ctx.reply('Hi customer');
+  switch (command) {
+    case 'register':
+      return userController.handleRegistrationProcess(ctx);
+      case 'location':
+        return orderController.handleOrderLocation(ctx);
+    default: orderController.handleCreateOrderCommand(ctx);
+  }
+ 
 
 });
+bot.action(/errand/, (ctx) => {
+  const command = ctx.match[1];
+  // Execute the corresponding command 
+  switch (command) {
+    case 'register':
+      return userController.handleRegistrationProcess(ctx);
+    case 'location':
+      return orderController.handleOrderLocation(ctx);
+    default: orderController.handleCreateErrandCommand(ctx);
+  }
 
+});
 // Handle callback queries
 bot.action(/rider_(.+)/, (ctx) => {
   const command = ctx.match[1];
@@ -84,7 +88,7 @@ bot.action(/rider_(.+)/, (ctx) => {
     case 'register':
       return ctx.reply('Welcome Rider...');
 
-      default: ctx.reply('Invalid command.');
+      default: userController.handleRegistrationProcess(ctx);
   } 
 })
 // Handle callback queries
@@ -94,7 +98,7 @@ bot.action(/errander_(.+)/, (ctx) => {
     case 'register':
       return ctx.reply('Welcome Errander...');
 
-    default: ctx.reply('Invalid command.');
+    default: userController.handleRegistrationProcess(ctx);
   }
 })
 
@@ -168,7 +172,7 @@ Available commands:
 
 // User commands
 bot.command('profile', userController.handleProfileCommand);
-bot.command(['register_rider', 'register_errander'], userController.handleRegistrationCommand);
+// bot.command(['register_rider', 'register_errander'], userController.handleRegistrationCommand);
 
 // Order commands
 bot.command('create_order', orderController.handleCreateOrderCommand);
