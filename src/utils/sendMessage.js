@@ -7,7 +7,9 @@ async function sendMessage(ctx, text, extra = {}) {
       }
       // Send new message and store its ID
       const message = await ctx.reply(text, extra);
-      ctx.session.lastBotMessageId = message.message_id;
+      if (ctx.session) {
+        ctx.session.lastBotMessageId = message.message_id;
+      }
       return message;
     } catch (error) {
       console.error('Error in sendMessage:', error);

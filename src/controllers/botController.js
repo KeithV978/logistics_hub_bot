@@ -37,11 +37,11 @@ bot.command('start', async (ctx) => {
       `Welcome to Logistics Hub \n ${ctx.from.first_name !== ""? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect one of the following options to proceed `, {
         reply_markup: {
           inline_keyboard: [
-            [{text:'Create Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
-            [{text:'Create Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
+            [{text:'Create a Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
+            [{text:'Create an Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
             [{text:'📝 Rider Signup', callback_data: 'rider'}],
-            [{text:'📝 Errand Runner Signup', callback_data: 'errander'}],
-            [{text:'👤 Profile', callback_data: 'profile'}],
+            // [{text:'📝 Errand Runner Signup', callback_data: 'errander'}],
+            // [{text:'👤 Profile', callback_data: 'profile'}],
           ],
           resize_keyboard: true,
           one_time_keyboard: true
