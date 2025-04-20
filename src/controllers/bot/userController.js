@@ -220,7 +220,7 @@ Please select your vehicle type:`;
       return sendMessage(ctx, 'You are already registered!');
     }
 
-    await ctx.scene.enter('registration-wizard');
+    await ctx.wizard.start();
   } catch (error) {
     console.error('Error in registration command:', error);
     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
