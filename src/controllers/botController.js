@@ -43,7 +43,7 @@ bot.command('start', async (ctx) => {
     }
 
     return sendMessage(ctx, 
-      `Welcome to Logistics Hub ${ctx.from.first_name ? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect on of the following options to proceed `, {
+      `Welcome to Logistics Hub \n ${ctx.from.first_name ? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect one of the following options to proceed `, {
         reply_markup: {
           inline_keyboard: [
             [{text:'👤 Customer', callback_data: 'customer'}],
