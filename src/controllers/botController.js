@@ -43,12 +43,12 @@ bot.command('start', async (ctx) => {
     }
 
     return sendMessage(ctx, 
-      'Welcome Victor! :', {
+      `Welcome to Logistics Hub ${ctx.from.first_name}! :`, {
         reply_markup: {
           inline_keyboard: [
-            [{text:'👤 Customer', callback_data: 'command_customer'}, {text:'🏍️ Register as Rider', callback_data: 'command_rider'}],
-           
-            [{text:'🛍️ Register as Errander', callback_data: 'command_errander'}]
+            [{text:'👤 Customer', callback_data: 'customer'}],
+            [{text:'🏍️ Register as Rider', callback_data: 'rider_register'}],
+            [{text:'🛍️ Register as Errand runner', callback_data: 'errander_register'}]
           ],
           resize_keyboard: true,
           one_time_keyboard: true
