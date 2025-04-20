@@ -81,6 +81,7 @@ bot.command('start', async (ctx) => {
 // Handle callback queries
 bot.action(/user(.+)/, (ctx) => {
   const command = ctx.match[1];
+  console.log(command);
   switch (command) {
     case 'signup':
       return userController.handleRegistrationCommand(ctx);
