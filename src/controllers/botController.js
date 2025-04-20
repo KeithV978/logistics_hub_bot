@@ -167,36 +167,37 @@ Available commands:
 });
 
 // User commands
-bot.command('profile', userController.handleProfileCommand);
+// bot.command('profile', userController.handleProfileCommand);
 // bot.command(['register_rider', 'register_errander'], userController.handleRegistrationCommand);
 
 // Order commands
-bot.command('create_order', orderController.handleCreateOrderCommand);
-bot.command('create_errand', orderController.handleCreateErrandCommand);
-bot.command('my_orders', orderController.handleMyOrdersCommand);
+// bot.command('create_order', orderController.handleCreateOrderCommand);
+// bot.command('create_errand', orderController.handleCreateErrandCommand);
+// bot.command('my_orders', orderController.handleMyOrdersCommand);
 
 // Handle registration process
-bot.on('text', async (ctx) => {
-  // Handle registration text inputs
-  if (ctx.session?.registration) {
-    return userController.handleRegistrationProcess(ctx);
-  }
+// bot.on('text', async (ctx) => {
+//   // Handle registration text inputs
+//   if (ctx.session?.registration) {
+//     return ;
+//     // userController.handleRegistrationProcess(ctx);
+//   }
   
-  // Handle order instructions
-  if (ctx.session?.orderCreation?.step === 'instructions') {
-    return orderController.handleOrderInstructions(ctx);
-  }
-});
+//   // Handle order instructions
+//   if (ctx.session?.orderCreation?.step === 'instructions') {
+//     return orderController.handleOrderInstructions(ctx);
+//   }
+// });
 
 // Handle location updates
-bot.on('location', async (ctx) => {
-  if (ctx.session?.orderCreation) {
-    return orderController.handleOrderLocation(ctx);
-  }
-});
+// bot.on('location', async (ctx) => {
+//   if (ctx.session?.orderCreation) {
+//     return orderController.handleOrderLocation(ctx);
+//   }
+// });
 
 // Handle photo uploads
-bot.on('photo', userController.handleRegistrationPhoto);
+// bot.on('photo', userController.handleRegistrationPhoto);
 
 // Error handling
 bot.catch((err, ctx) => {
