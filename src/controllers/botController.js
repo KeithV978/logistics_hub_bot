@@ -84,7 +84,7 @@ bot.action(/rider_(.+)/, (ctx) => {
     case 'register':
       return ctx.reply('Welcome Rider...');
 
-      default: userController.handleRegistrationProcess(ctx);
+      default: userController.handleRegistrationCommand(ctx);
   } 
 })
 // Handle callback queries
