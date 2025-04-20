@@ -39,7 +39,7 @@ bot.command('start', async (ctx) => {
           inline_keyboard: [
             [{text:'Create a Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
             [{text:'Create an Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
-            [{text:'📝 Rider Signup', callback_data: 'rider'}],
+            [{text:'📝 Rider/Errander Signup', callback_data: 'user_signup'}],
             // [{text:'📝 Errand Runner Signup', callback_data: 'errander'}],
             // [{text:'👤 Profile', callback_data: 'profile'}],
           ],
@@ -79,13 +79,13 @@ bot.command('start', async (ctx) => {
 
 // });
 // Handle callback queries
-bot.action(/rider_(.+)/, (ctx) => {
+bot.action(/user(.+)/, (ctx) => {
   const command = ctx.match[1];
   switch (command) {
-    case 'register':
-      return ctx.reply('Welcome Rider...');
+    case 'signup':
+      return userController.handleRegistrationCommand(ctx);
 
-      default: userController.handleRegistrationCommand(ctx);
+      default: return sendMessage(ctx, 'Invalid command. Please try again.');
   } 
 })
 // Handle callback queries
