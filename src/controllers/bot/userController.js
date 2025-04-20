@@ -275,7 +275,5 @@ async function createUser(data) {
 
 module.exports = {
   handleProfileCommand,
-  handleRegistrationCommand,
-  handleRegistrationProcess,
-  handleRegistrationPhoto
+  handleRegistrationCommand,  
 }; 
