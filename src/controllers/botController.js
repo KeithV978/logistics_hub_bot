@@ -37,8 +37,8 @@ bot.command('start', async (ctx) => {
       `Welcome to Logistics Hub \n ${ctx.from.first_name !== ""? userGreeting(ctx.from.first_name) : userGreeting(ctx.from.username)}! \nSelect one of the following options to proceed `, {
         reply_markup: {
           inline_keyboard: [
-            [{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
-            [{text:'🛍️ My Errands', callback_data: 'errand'}],
+            [{text:'🏍️ Create Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
+            [{text:'🛍️ Create Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
             [{text:'👤 Rider Register', callback_data: 'rider'}],
             [{text:'👤 Errand Runner Register', callback_data: 'errander'}]
           ],
@@ -56,12 +56,12 @@ bot.command('start', async (ctx) => {
 });
 
 // Handle callback queries
-bot.action(/delivery/, (ctx) => {
+bot.action(/delivery_(.+)/, (ctx) => {
   const command = ctx.match[1];
   // Execute the corresponding command 
   switch (command) {
-    case 'register':
-      return userController.handleRegistrationProcess(ctx);
+    case 'create':
+      return orderController.handleCreateOrderCommand(ctx);
       case 'location':
         return orderController.handleOrderLocation(ctx);
     default: orderController.handleCreateOrderCommand(ctx);
@@ -69,12 +69,12 @@ bot.action(/delivery/, (ctx) => {
  
 
 });
-bot.action(/errand/, (ctx) => {
+bot.action(/errand_(.+)/, (ctx) => {
   const command = ctx.match[1];
   // Execute the corresponding command 
   switch (command) {
-    case 'register':
-      return userController.handleRegistrationProcess(ctx);
+    case 'create':
+      return orderController.handleCreateErrandCommand(ctx);
     case 'location':
       return orderController.handleOrderLocation(ctx);
     default: orderController.handleCreateErrandCommand(ctx);

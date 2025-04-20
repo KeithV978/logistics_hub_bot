@@ -1,22 +1,8 @@
 const { Markup } = require('telegraf');
 const { User } = require('../../models');
 const { verifyNIN } = require('../../services/ninVerification');
-
-// Helper function to delete previous message and send new one
-async function sendMessage(ctx, text, extra = {}) {
-  try {
-    // Delete previous bot message if exists
-    if (ctx.session?.lastBotMessageId) {
-      await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
-    }
-    // Send new message and store its ID
-    const message = await ctx.reply(text, extra);
-    ctx.session.lastBotMessageId = message.message_id;
-    return message;
-  } catch (error) {
-    console.error('Error in sendMessage:', error);
-  }
-}
+const { sendMessage } = require('../../utils/sendMessage');
+ 
 
 // Profile command handler
 async function handleProfileCommand(ctx) {
@@ -69,6 +55,24 @@ async function handleRegistrationCommand(ctx) {
 // Registration process handler
 async function handleRegistrationProcess(ctx) {
   if (!ctx.session?.registration) return;
+  // Check if user already exists in database
+  const existingUser = await User.findOne({
+    where: { telegramId: ctx.from.id.toString() }
+  });
+
+  if (existingUser) {
+    const profileMessage = `
+Your Profile:
+- Name: ${existingUser.fullName}
+- Role: ${existingUser.role}
+- Rating: ${existingUser.rating.toFixed(1)} (${existingUser.totalRatings} ratings) 
+- Verification Status: ${existingUser.isVerified ? '✅ Verified' : '❌ Not Verified'}
+- Active Status: ${existingUser.isActive ? '🟢 Active' : '🔴 Inactive'}
+${existingUser.role === 'rider' ? `- Vehicle Type: ${existingUser.vehicleType || 'Not specified'}` : ''}
+`;
+    return sendMessage(ctx, profileMessage);
+  }
+
 
   try {
     const { registration } = ctx.session;
