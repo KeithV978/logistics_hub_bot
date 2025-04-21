@@ -38,10 +38,10 @@ async function handleRegistrationCommand(ctx) {
       return sendMessage(ctx, 'You are already registered!');
     }
     // Clear any existing registration data
-    ctx.session?.registration = {
-      telegramId: ctx.from.id,
-      step: 'role'
-    };
+    // ctx.session.registration = {
+    //   telegramId: ctx.from.id,
+    //   step: 'role'
+    // };
     // Display welcome message
     await ctx.reply(`👋 Welcome to the registration process!
 
