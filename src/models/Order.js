@@ -32,15 +32,15 @@ const Order = sequelize.define('Order', {
     defaultValue: 'pending',
   },
   pickupLocation: {
-    type: DataTypes.STRING,
+    type: DataTypes.GEOGRAPHY('POINT', 4326),
     allowNull: true, // Null for errands
   },
   dropoffLocation: {
-    type: DataTypes.STRING,
+    type: DataTypes.GEOGRAPHY('POINT', 4326),
     allowNull: true, // Null for errands
   },
   errandLocation: {
-    type: DataTypes.STRING,
+    type: DataTypes.GEOGRAPHY('POINT', 4326),
     allowNull: true, // Only for errands
   },
   instructions: {
