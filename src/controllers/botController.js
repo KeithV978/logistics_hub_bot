@@ -85,6 +85,7 @@ bot.action(/signup/, (ctx) => {
   return userController.handleRegistrationCommand(ctx);   
 })
 
+
 // Handle callback queries
 // bot.action(/errander_(.+)/, (ctx) => {
 //   const command = ctx.match[1];
@@ -165,7 +166,7 @@ Available commands:
 });
 
 // User commands
-// bot.command('profile', userController.handleProfileCommand);
+bot.command('profile', userController.handleProfileCommand);
 // bot.command(['register_rider', 'register_errander'], userController.handleRegistrationCommand);
 
 // Order commands
