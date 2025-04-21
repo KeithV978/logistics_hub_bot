@@ -8,6 +8,7 @@ const userController = require('./bot/userController');
 const orderController = require('./bot/orderController');
 const userGreeting =require('../utils/Greeting')
 const { sendMessage } = require('../utils/sendMessage'); 
+
 // Middleware to handle user state
 bot.use(async (ctx, next) => {
   if (ctx.from) {
@@ -23,9 +24,9 @@ bot.use(async (ctx, next) => {
 // Start command
 bot.command('start', async (ctx) => {
   // Delete previous bot message if exists
-  // if (ctx.session?.lastBotMessageId) {
-  //   await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
-  // }
+  if (ctx.session?.lastBotMessageId) {
+    await ctx.deleteMessage(ctx.session.lastBotMessageId).catch(() => {});
+  }
 
   try {
     if (ctx.state.user) {
@@ -40,7 +41,7 @@ bot.command('start', async (ctx) => {
           inline_keyboard: [
             [{text:'Create a Delivery', callback_data: 'delivery_create'},{text:'🏍️ My Deliveries', callback_data: 'delivery'}],
             [{text:'Create an Errand', callback_data: 'errand_create'},{text:'🛍️ My Errands', callback_data: 'errand'}],
-            [{text:'📝 Rider/Errander Signup', callback_data: 'user_signup'}],
+            [{text:'📝 Rider/Errander Signup', callback_data: 'signup'}],
             // [{text:'📝 Errand Runner Signup', callback_data: 'errander'}],
             // [{text:'👤 Profile', callback_data: 'profile'}],
           ],
@@ -80,16 +81,10 @@ bot.command('start', async (ctx) => {
 
 // });
 // Handle callback queries
-bot.action(/user(.+)/, (ctx) => {
-  const command = ctx.match[1].split('_')[1]; 
-
-  switch (command) {
-    case 'signup':
-      return userController.handleRegistrationCommand(ctx);
-
-      default: return sendMessage(ctx, 'Invalid command. Please try again.');
-  } 
+bot.action(/signup/, (ctx) => { 
+  return userController.handleRegistrationCommand(ctx);   
 })
+
 // Handle callback queries
 // bot.action(/errander_(.+)/, (ctx) => {
 //   const command = ctx.match[1];
@@ -179,18 +174,20 @@ Available commands:
 // bot.command('my_orders', orderController.handleMyOrdersCommand);
 
 // Handle registration process
-// bot.on('text', async (ctx) => {
-//   // Handle registration text inputs
-//   if (ctx.session?.registration) {
-//     return ;
-//     // userController.handleRegistrationProcess(ctx);
-//   }
+bot.on('text', async (ctx) => {
+  // Handle registration text inputs
+  // if (ctx.session?.registration) {
+    // return ;
+    // userController.handleRegistrationProcess(ctx);
+  // }
   
-//   // Handle order instructions
-//   if (ctx.session?.orderCreation?.step === 'instructions') {
-//     return orderController.handleOrderInstructions(ctx);
-//   }
-// });
+  // Handle order instructions
+  if (ctx.session?.orderCreation?.step === 'instructions') {
+    return orderController.handleOrderInstructions(ctx);
+  }
+
+
+});
 
 // Handle location updates
 // bot.on('location', async (ctx) => {
