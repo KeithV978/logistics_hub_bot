@@ -456,34 +456,34 @@ async function handleDeliveryStatus(ctx){}
 
 // // View my orders command handler
 // async function handleMyOrdersCommand(ctx) {
-  try {
-    if (!ctx.state.user) {
-      return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
-    }
+//   try {
+//     if (!ctx.state.user) {
+//       return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
+//     }
 
-    const orders = await Order.findAll({
-      where: { customerTelegramId: ctx.from.id.toString() },
-      order: [['createdAt', 'DESC']],
-      limit: 5
-    });
+//     const orders = await Order.findAll({
+//       where: { customerTelegramId: ctx.from.id.toString() },
+//       order: [['createdAt', 'DESC']],
+//       limit: 5
+//     });
 
-    if (!orders.length) {
-      return sendMessage(ctx, 'You have no orders yet.');
-    }
+//     if (!orders.length) {
+//       return sendMessage(ctx, 'You have no orders yet.');
+//     }
 
-    const ordersList = orders.map(order => `
-Order ID: ${order.id}
-Type: ${order.type}
-Status: ${order.status}
-Created: ${order.createdAt.toLocaleString()}
-`).join('\n');
+//     const ordersList = orders.map(order => `
+// Order ID: ${order.id}
+// Type: ${order.type}
+// Status: ${order.status}
+// Created: ${order.createdAt.toLocaleString()}
+// `).join('\n');
 
-    return sendMessage(ctx, `Your Recent Orders:\n${ordersList}`);
-  } catch (error) {
-    console.error('Error in my orders command:', error);
-    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
-  }
-}
+//     return sendMessage(ctx, `Your Recent Orders:\n${ordersList}`);
+//   } catch (error) {
+//     console.error('Error in my orders command:', error);
+//     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
+//   }
+// }
 
 module.exports = {
   handleDeliveryOrderCreation,
