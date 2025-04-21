@@ -406,4 +406,5 @@ async function createUser(data) {
 
 module.exports = {
   handleRegistrationCommand,  
+  registrationWizard
 }; 
