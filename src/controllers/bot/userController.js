@@ -56,7 +56,7 @@ const registrationWizard = new Scenes.WizardScene(
   async (ctx) => {
     await deleteMessages(ctx);
     ctx.wizard.state.phoneNumber = ctx.message.text;
-    await sendMessage(ctx, 'Please share your location:', {
+    await sendMessage(ctx, 'Please share your current location:', {
       reply_markup: {
         keyboard: [[{ text: '📍 Share Location', request_location: true }]],
         resize_keyboard: true,
@@ -141,7 +141,7 @@ const registrationWizard = new Scenes.WizardScene(
     }
     await sendMessage(ctx, 'Please send your photograph:', {
       reply_markup: {
-        keyboard: [[{ text: '📸 Send Photo' }]],
+        keyboard: [[{ text: '📸 Upload Your Photo' }]],
         resize_keyboard: true,
         one_time_keyboard: true
       }
@@ -216,9 +216,11 @@ async function handleRegistrationCommand(ctx) {
     }
     
     // Display welcome message
-    await ctx.reply(`👋 Welcome to the signup wizard!
+    await ctx.reply(`👋 Welcome to the profile wizard!
 
-      I'll guide you through creating your account step by step.
+      By Signing up, you agree to the terms and conditions (/terms_and_conditions) of the platform.
+
+      I'll guide you through creating your profile step by step.
       
       During registration, you'll need to provide:
       • Your role (rider or errander(errand runner))
@@ -243,15 +245,25 @@ async function handleRegistrationCommand(ctx) {
 // Profile command handler
 async function handleProfileCommand(ctx) {
   try {
-    if (!ctx.state.user) {
-      return sendMessage(ctx, 'Please register first using the /start command.');
+    // Check if user exists in database
+    const existingUser = await User.findOne({
+      where: { telegramId: ctx.from.id.toString() }
+    });
+    if (existingUser) {
+      return sendMessage(ctx, "You're already registered. Use /profile to view your details.");
     }
 
     const user = ctx.state.user;
     let locationText = '';
-    if (user.location) {
-      locationText = `📍 Location: ${user.location.latitude}, ${user.location.longitude}\n`;
+    if (user.currentLocation) {
+      locationText = `📍 Location: ${user.currentLocation.latitude}, ${user.currentLocation.longitude}\n`;
     }
+
+    // Get the last 3 reviews if they exist
+    const recentReviews = user.feedback.reviews.slice(-3);
+    const reviewsText = recentReviews.length > 0 
+      ? '\n*Recent Reviews*\n' + recentReviews.map(review => `• "${review.text}" - ⭐${review.rating}`).join('\n')
+      : '';
 
     const profileMessage = `
 👤 *Your Profile*
@@ -264,7 +276,7 @@ ${locationText}
 *Account Status*
 • Verification: ${user.isVerified ? '✅ Verified' : '❌ Not Verified'}
 • Status: ${user.isActive ? '🟢 Active' : '🔴 Inactive'}
-• Rating: ${user.rating ? `⭐ ${user.rating.toFixed(1)} (${user.totalRatings} ratings)` : 'No ratings yet'}
+• Rating: ${user.feedback.rating ? `⭐ ${user.feedback.rating.toFixed(1)} (${user.feedback.totalRatings} ratings)` : 'No ratings yet'}
 
 *Bank Details*
 • Bank: ${user.bankAccountDetails.bankName}
@@ -272,6 +284,7 @@ ${locationText}
 • Account Number: ${user.bankAccountDetails.accountNumber}
 
 ${user.role === 'rider' ? `*Vehicle Information*\n• Type: ${user.vehicleType || 'Not specified'}` : ''}
+${reviewsText}
 
 Use /help to see available commands.`;
 
@@ -288,20 +301,33 @@ async function createUser(data) {
     telegramId: data.telegramId,
     fullName: data.fullName,
     phoneNumber: data.phoneNumber,
-    location: data.location,
-    bankAccountDetails: {bankName: data.bankName, accountNumber: data.bankAccountNumber, accountName: data.accountName},
+    bankAccountDetails: {
+      bankName: data.bankAccountDetails.bankName, 
+      accountNumber: data.bankAccountDetails.accountNumber, 
+      accountName: data.bankAccountDetails.accountName
+    },
     photograph: data.photograph,
     nin: data.nin,
     role: data.role,
     vehicleType: data.vehicleType,
+    currentLocation: data.location,
     isVerified: false,
     isActive: true,
-    rating: 0,
-    totalRatings: 0
+    feedback: {
+      rating: 0,
+      totalRatings: 0,
+      reviews: []
+    }
   });
+}
+
+// link a google doc that is uneditable
+async function handleTermsAndConditionsCommand(ctx){
+  return sendMessage(ctx, 'Terms and conditions');
 }
 
 module.exports = {
   handleRegistrationCommand,
-  handleProfileCommand
+  handleProfileCommand,
+  handleTermsAndConditionsCommand
 }; 

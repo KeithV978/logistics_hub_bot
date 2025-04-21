@@ -44,20 +44,21 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
-  rating: {
-    type: DataTypes.FLOAT,
-    defaultValue: 0,
-  },
-  totalRatings: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
+  feedback: {
+    type: DataTypes.JSONB,
+    defaultValue: {
+      rating: 0,
+      totalRatings: 0,
+      reviews: []
+    },
+    allowNull: false,
   },
   vehicleType: {
     type: DataTypes.STRING,
     allowNull: true,
   },
   currentLocation: {
-    type: DataTypes.STRING,
+    type: DataTypes.JSONB,
     allowNull: true,
   },
   lastLocationUpdate: {
