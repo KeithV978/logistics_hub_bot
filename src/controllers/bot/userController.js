@@ -59,14 +59,14 @@ async function handleRegistrationCommand(ctx) {
       Let's get started! 🚀`);
           
           // Enter the registration wizard scene
-          // ctx.scene.enter('registrationWizard');
+          ctx.scene.enter('registrationWizard');
         // } catch (error) {
         //   console.error('Error starting registration wizard:', error);
         //   return ctx.reply('Sorry, there was an error starting the registration process. Please try again later.');
         // } 
   // Create registration wizard scene
-  const registrationWizard = new Scenes.WizardScene.enter(
-    'registrationWizard',
+  const registrationWizard = new Scenes.WizardScene('registrationWizard',
+    [
     // Step 1 - Full Name
     async (ctx) => {
       const summary = `Signup details:
@@ -240,7 +240,7 @@ Please select your vehicle type:`;
         return ctx.scene.leave();
       }
     }
-  );
+  ]);
 
   // Set up the stage with the wizard
   const stage = new Scenes.Stage([registrationWizard]);
