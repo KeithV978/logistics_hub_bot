@@ -7,8 +7,7 @@ const { calculateDistance } = require('../utils/location');
 const userController = require('./bot/userController');
 const orderController = require('./bot/orderController');
 const userGreeting =require('../utils/Greeting')
-const { sendMessage } = require('../utils/sendMessage');
-const { Scenes } = require('telegraf');
+const { sendMessage } = require('../utils/sendMessage'); 
 // Middleware to handle user state
 bot.use(async (ctx, next) => {
   if (ctx.from) {
@@ -19,9 +18,6 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
- // Set up the stage with the wizard
- const stage = new Scenes.Stage([userController.registrationWizard]);
- bot.use(stage.middleware());
 
 
 // Start command

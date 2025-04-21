@@ -1,4 +1,4 @@
-const { Telegraf, session } = require('telegraf');
+const {Scenes, Telegraf, session } = require('telegraf');
 require('dotenv').config();
 
 // Initialize bot with webhook reply enabled
@@ -9,6 +9,10 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN, {
 // Configure session middleware with memory storage for development
 // In production, you should use Redis or another persistent store
 bot.use(session());
+
+ // Set up the stage with the wizard
+ const stage = new Scenes.Stage();
+ bot.use(stage.middleware());
 
 // Webhook configuration
 const webhookConfig = {
