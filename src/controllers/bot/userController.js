@@ -29,9 +29,44 @@ const { bot } = require('../../config/telegram');
 
 // Registration command handler
 async function handleRegistrationCommand(ctx) { 
+  try { 
+    const existingUser = await User.findOne({
+      where: { telegramId: ctx.from.id.toString() }
+    });
+
+    if (existingUser) {
+      return sendMessage(ctx, 'You are already registered!');
+    }
+    // Clear any existing registration data
+    ctx.session.registration = {
+      telegramId: ctx.from.id,
+      step: 'role'
+    };
+    // Display welcome message
+    await ctx.reply(`👋 Welcome to the registration process!
+
+      I'll guide you through creating your account step by step.
+      
+      During registration, you'll need to provide:
+      • Your role (rider or errander(errand runner))
+      • Full name
+      • Phone number
+      • Bank account details
+      • National ID Number (NIN)
+      • Your photo
+      • Eligibility Slip
+      
+      Let's get started! 🚀`);
+          
+          // Enter the registration wizard scene
+          ctx.scene.enter('registrationWizard');
+        // } catch (error) {
+        //   console.error('Error starting registration wizard:', error);
+        //   return ctx.reply('Sorry, there was an error starting the registration process. Please try again later.');
+        // } 
   // Create registration wizard scene
   const registrationWizard = new Scenes.WizardScene(
-    'registration-wizard',
+    'registrationWizard',
     // Step 1 - Full Name
     async (ctx) => {
       const summary = `Signup details:
@@ -211,16 +246,8 @@ Please select your vehicle type:`;
   const stage = new Scenes.Stage([registrationWizard]);
   bot.use(stage.middleware());
 
-  try { 
-    const existingUser = await User.findOne({
-      where: { telegramId: ctx.from.id.toString() }
-    });
 
-    if (existingUser) {
-      return sendMessage(ctx, 'You are already registered!');
-    }
-
-    await ctx.scene.enter('registration-wizard');
+ 
   } catch (error) {
     console.error('Error in registration command:', error);
     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
