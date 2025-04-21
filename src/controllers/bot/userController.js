@@ -77,6 +77,7 @@ Please enter your full name (Surname FirstName):`;
     },
     // Step 2 - Role Selection
     async (ctx) => {
+      ctx.wizard.state.fullName = ctx.message.text;
       const summary = `Signup details:
 Full Name: ${ctx.wizard.state.fullName}
 
@@ -94,6 +95,7 @@ Please select your role:`;
     },
     // Step 3 - Email
     async (ctx) => {
+      ctx.wizard.state.role = ctx.message.text;
       const summary = `Signup details:
 Full Name: ${ctx.wizard.state.fullName}
 Role: ${ctx.wizard.state.role}
@@ -104,6 +106,7 @@ Please enter your email address:`;
     },
     // Step 4 - Phone Number
     async (ctx) => {
+      ctx.wizard.state.email = ctx.message.text;
       const summary = `Signup details:
 Full Name: ${ctx.wizard.state.fullName}
 Role: ${ctx.wizard.state.role}
@@ -115,6 +118,7 @@ Please enter your phone number:`;
     },
     // Step 5 - Bank Account Number
     async (ctx) => {
+      ctx.wizard.state.phoneNumber = ctx.message.text;
       const summary = `Signup details:
 Full Name: ${ctx.wizard.state.fullName}
 Role: ${ctx.wizard.state.role}
@@ -128,6 +132,7 @@ Please enter your bank account number:`;
        
     // Step 6 - Bank Name
     async (ctx) => {
+      ctx.wizard.state.bankAccountNumber = ctx.message.text;
       const summary = `Signup details:
 Full Name: ${ctx.wizard.state.fullName}
 Role: ${ctx.wizard.state.role}
@@ -141,6 +146,7 @@ Please enter your bank name:`;
          
     // Step 7 - Account Name
     async (ctx) => {
+      ctx.wizard.state.bankName = ctx.message.text;
       const summary = `Signup details:
       Full Name: ${ctx.wizard.state.fullName}
       Role: ${ctx.wizard.state.role}
@@ -155,6 +161,7 @@ Please enter your bank name:`;
     },
       // Step 8 - Vehicle Type Selection
      async (ctx) => {
+      ctx.wizard.state.vehicleType = ctx.message.text;
       const summary = `Signup details:
 Full Name: ${ctx.wizard.state.fullName}
 Role: ${ctx.wizard.state.role}
@@ -178,6 +185,7 @@ Please select your vehicle type:`;
     },
     // Step 9 - NIN
     async (ctx) => { 
+      ctx.wizard.state.vehicleType = ctx.message.text;
       const summary = `Signup details:
       Full Name: ${ctx.wizard.state.fullName}
       Role: ${ctx.wizard.state.role}
@@ -192,6 +200,7 @@ Please select your vehicle type:`;
     },
     // Step 10 - Documents
     async (ctx) => {
+      ctx.wizard.state.nin = ctx.message.text;
       const summary = `Signup details:
       Full Name: ${ctx.wizard.state.fullName}
       Role: ${ctx.wizard.state.role}
@@ -207,6 +216,7 @@ Please select your vehicle type:`;
     },
     // Final Step - Create User
     async (ctx) => {
+      ctx.wizard.state.eligibilitySlip = ctx.message.document ? ctx.message.document.file_id : null;
       try {
         // Verify NIN before creating user
         const ninVerification = await verifyNIN(ctx.wizard.state.nin);
