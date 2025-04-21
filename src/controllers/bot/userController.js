@@ -4,6 +4,151 @@ const { verifyNIN } = require('../../services/ninVerification');
 const { sendMessage } = require('../../utils/sendMessage');
 const { bot } = require('../../config/telegram');
 
+// Create registration wizard scene
+const registrationWizard = new Scenes.WizardScene(
+  'registration',
+  // Step 1 - Role Selection
+  async (ctx) => {
+    await sendMessage(ctx, 'Please select your role: ', {
+      reply_markup: {
+        keyboard: [
+          ['🏍️ Rider', '🛍️ Errander']
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: true
+      }
+    });
+    return ctx.wizard.next();
+  },
+  // Step 2 - Full Name
+  async (ctx) => {
+    ctx.wizard.state.role = ctx.message.text.includes('Rider') ? 'rider' : 'errander';
+    await sendMessage(ctx, 'Please enter your full name (Surname FirstName):');
+    return ctx.wizard.next();
+  },
+  // Step 3 - Phone Number
+  async (ctx) => {
+    ctx.wizard.state.fullName = ctx.message.text;
+    await sendMessage(ctx, 'Please enter your phone number:');
+    return ctx.wizard.next();
+  },
+  // Step 4 - Bank Account Number
+  async (ctx) => {
+    ctx.wizard.state.phoneNumber = ctx.message.text;
+    await sendMessage(ctx, 'Please enter your bank account number:');
+    return ctx.wizard.next();
+  },
+  // Step 5 - Bank Name
+  async (ctx) => {
+    ctx.wizard.state.bankAccountNumber = ctx.message.text;
+    await sendMessage(ctx, 'Please enter your bank name:');
+    return ctx.wizard.next();
+  },
+  // Step 6 - Account Name
+  async (ctx) => {
+    ctx.wizard.state.bankName = ctx.message.text;
+    await sendMessage(ctx, 'Please enter your account name:');
+    return ctx.wizard.next();
+  },
+  // Step 7 - Vehicle Type (for riders only)
+  async (ctx) => {
+    ctx.wizard.state.accountName = ctx.message.text;
+    if (ctx.wizard.state.role === 'rider') {
+      await sendMessage(ctx, 'Please select your vehicle type:', {
+        reply_markup: {
+          keyboard: [
+            ['🚲 Bicycle', '🏍️ Motorcycle'],
+            ['🚗 Car', '🚚 Van', '🚛 Truck']
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+    } else {
+      ctx.wizard.state.vehicleType = null;
+      return ctx.wizard.next();
+    }
+    return ctx.wizard.next();
+  },
+  // Step 8 - NIN
+  async (ctx) => {
+    if (ctx.wizard.state.role === 'rider') {
+      ctx.wizard.state.vehicleType = ctx.message.text.split(' ')[1];
+    }
+    await sendMessage(ctx, 'Please enter your NIN (National Identification Number):');
+    return ctx.wizard.next();
+  },
+  // Step 9 - Photo
+  async (ctx) => {
+    ctx.wizard.state.nin = ctx.message.text;
+    // Verify NIN
+    const ninVerification = await verifyNIN(ctx.wizard.state.nin);
+    if (!ninVerification.isValid) {
+      await sendMessage(ctx, 'Invalid NIN. Please start the registration process again.');
+      return ctx.scene.leave();
+    }
+    await sendMessage(ctx, 'Please send your photograph:', {
+      reply_markup: {
+        keyboard: [[{ text: '📸 Send Photo' }]],
+        resize_keyboard: true,
+        one_time_keyboard: true
+      }
+    });
+    return ctx.wizard.next();
+  },
+  // Step 10 - Eligibility Slip
+  async (ctx) => {
+    if (!ctx.message.photo) {
+      await sendMessage(ctx, 'Please send a photo. Try again:');
+      return;
+    }
+    ctx.wizard.state.photograph = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+    await sendMessage(ctx, 'Please upload your Eligibility slip document:');
+    return ctx.wizard.next();
+  },
+  // Final Step - Create User
+  async (ctx) => {
+    try {
+      if (!ctx.message.document) {
+        await sendMessage(ctx, 'Please upload a document. Try again:');
+        return;
+      }
+
+      const userData = {
+        telegramId: ctx.from.id.toString(),
+        fullName: ctx.wizard.state.fullName,
+        phoneNumber: ctx.wizard.state.phoneNumber,
+        bankAccountDetails: {
+          accountNumber: ctx.wizard.state.bankAccountNumber,
+          bankName: ctx.wizard.state.bankName,
+          accountName: ctx.wizard.state.accountName
+        },
+        nin: ctx.wizard.state.nin,
+        role: ctx.wizard.state.role,
+        vehicleType: ctx.wizard.state.vehicleType,
+        photograph: ctx.wizard.state.photograph,
+        documents: ctx.message.document.file_id
+      };
+
+      const user = await createUser(userData);
+      await sendMessage(ctx, 'Registration completed successfully! Use /profile to view your details.', {
+        reply_markup: { remove_keyboard: true }
+      });
+      return ctx.scene.leave();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      await sendMessage(ctx, 'Sorry, something went wrong during registration. Please try again.', {
+        reply_markup: { remove_keyboard: true }
+      });
+      return ctx.scene.leave();
+    }
+  }
+);
+
+// Set up the stage with the wizard
+const stage = new Scenes.Stage([registrationWizard]);
+bot.use(stage.middleware());
+
 // Registration command handler
 async function handleRegistrationCommand(ctx) { 
   try { 
@@ -30,154 +175,9 @@ async function handleRegistrationCommand(ctx) {
       • Eligibility Slip
       
       Let's get started! 🚀`);
-          
-    // Create registration wizard scene
-    const registrationWizard = new Scenes.WizardScene(
-      'registration',
-      // Step 1 - Role Selection
-      async (ctx) => {
-        await sendMessage(ctx, 'Please select your role: ', {
-          reply_markup: {
-            keyboard: [
-              ['🏍️ Rider', '🛍️ Errander']
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: true
-          }
-        });
-        return ctx.wizard.next();
-      },
-      // Step 2 - Full Name
-      async (ctx) => {
-        ctx.wizard.state.role = ctx.message.text.includes('Rider') ? 'rider' : 'errander';
-        await sendMessage(ctx, 'Please enter your full name (Surname FirstName):');
-        return ctx.wizard.next();
-      },
-      // Step 3 - Phone Number
-      async (ctx) => {
-        ctx.wizard.state.fullName = ctx.message.text;
-        await sendMessage(ctx, 'Please enter your phone number:');
-        return ctx.wizard.next();
-      },
-      // Step 4 - Bank Account Number
-      async (ctx) => {
-        ctx.wizard.state.phoneNumber = ctx.message.text;
-        await sendMessage(ctx, 'Please enter your bank account number:');
-        return ctx.wizard.next();
-      },
-      // Step 5 - Bank Name
-      async (ctx) => {
-        ctx.wizard.state.bankAccountNumber = ctx.message.text;
-        await sendMessage(ctx, 'Please enter your bank name:');
-        return ctx.wizard.next();
-      },
-      // Step 6 - Account Name
-      async (ctx) => {
-        ctx.wizard.state.bankName = ctx.message.text;
-        await sendMessage(ctx, 'Please enter your account name:');
-        return ctx.wizard.next();
-      },
-      // Step 7 - Vehicle Type (for riders only)
-      async (ctx) => {
-        ctx.wizard.state.accountName = ctx.message.text;
-        if (ctx.wizard.state.role === 'rider') {
-          await sendMessage(ctx, 'Please select your vehicle type:', {
-            reply_markup: {
-              keyboard: [
-                ['🚲 Bicycle', '🏍️ Motorcycle'],
-                ['🚗 Car', '🚚 Van', '🚛 Truck']
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: true
-            }
-          });
-        } else {
-          ctx.wizard.state.vehicleType = null;
-          return ctx.wizard.next();
-        }
-        return ctx.wizard.next();
-      },
-      // Step 8 - NIN
-      async (ctx) => {
-        if (ctx.wizard.state.role === 'rider') {
-          ctx.wizard.state.vehicleType = ctx.message.text.split(' ')[1];
-        }
-        await sendMessage(ctx, 'Please enter your NIN (National Identification Number):');
-        return ctx.wizard.next();
-      },
-      // Step 9 - Photo
-      async (ctx) => {
-        ctx.wizard.state.nin = ctx.message.text;
-        // Verify NIN
-        const ninVerification = await verifyNIN(ctx.wizard.state.nin);
-        if (!ninVerification.isValid) {
-          await sendMessage(ctx, 'Invalid NIN. Please start the registration process again.');
-          return ctx.scene.leave();
-        }
-        await sendMessage(ctx, 'Please send your photograph:', {
-          reply_markup: {
-            keyboard: [[{ text: '📸 Send Photo' }]],
-            resize_keyboard: true,
-            one_time_keyboard: true
-          }
-        });
-        return ctx.wizard.next();
-      },
-      // Step 10 - Eligibility Slip
-      async (ctx) => {
-        if (!ctx.message.photo) {
-          await sendMessage(ctx, 'Please send a photo. Try again:');
-          return;
-        }
-        ctx.wizard.state.photograph = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-        await sendMessage(ctx, 'Please upload your Eligibility slip document:');
-        return ctx.wizard.next();
-      },
-      // Final Step - Create User
-      async (ctx) => {
-        try {
-          if (!ctx.message.document) {
-            await sendMessage(ctx, 'Please upload a document. Try again:');
-            return;
-          }
-
-          const userData = {
-            telegramId: ctx.from.id.toString(),
-            fullName: ctx.wizard.state.fullName,
-            phoneNumber: ctx.wizard.state.phoneNumber,
-            bankAccountDetails: {
-              accountNumber: ctx.wizard.state.bankAccountNumber,
-              bankName: ctx.wizard.state.bankName,
-              accountName: ctx.wizard.state.accountName
-            },
-            nin: ctx.wizard.state.nin,
-            role: ctx.wizard.state.role,
-            vehicleType: ctx.wizard.state.vehicleType,
-            photograph: ctx.wizard.state.photograph,
-            documents: ctx.message.document.file_id
-          };
-
-          const user = await createUser(userData);
-          await sendMessage(ctx, 'Registration completed successfully! Use /profile to view your details.', {
-            reply_markup: { remove_keyboard: true }
-          });
-          return ctx.scene.leave();
-        } catch (error) {
-          console.error('Error creating user:', error);
-          await sendMessage(ctx, 'Sorry, something went wrong during registration. Please try again.', {
-            reply_markup: { remove_keyboard: true }
-          });
-          return ctx.scene.leave();
-        }
-      }
-    );
-
-    // Set up the stage with the wizard
-    const stage = new Scenes.Stage([registrationWizard]);
-    bot.use(stage.middleware());
 
     // Enter the registration scene
-    await ctx.scene.enter('registration');
+    return ctx.scene.enter('registration');
           
   } catch (error) {
     console.error('Error in registration command:', error);
