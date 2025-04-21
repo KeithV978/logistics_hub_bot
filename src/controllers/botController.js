@@ -8,7 +8,7 @@ const userController = require('./bot/userController');
 const orderController = require('./bot/orderController');
 const userGreeting =require('../utils/Greeting')
 const { sendMessage } = require('../utils/sendMessage');
-
+const { Scenes } = require('telegraf');
 // Middleware to handle user state
 bot.use(async (ctx, next) => {
   if (ctx.from) {
@@ -18,6 +18,11 @@ bot.use(async (ctx, next) => {
   }
   return next();
 });
+
+ // Set up the stage with the wizard
+ const stage = new Scenes.Stage([userController.registrationWizard]);
+ bot.use(stage.middleware());
+
 
 // Start command
 bot.command('start', async (ctx) => {
@@ -81,7 +86,7 @@ bot.command('start', async (ctx) => {
 // Handle callback queries
 bot.action(/user(.+)/, (ctx) => {
   const command = ctx.match[1].split('_')[1]; 
-  
+
   switch (command) {
     case 'signup':
       return userController.handleRegistrationCommand(ctx);

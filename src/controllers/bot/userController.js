@@ -1,8 +1,7 @@
 const { Markup, Scenes } = require('telegraf');
 const { User } = require('../../models');
 const { verifyNIN } = require('../../services/ninVerification');
-const { sendMessage } = require('../../utils/sendMessage');
-const { bot } = require('../../config/telegram');
+const { sendMessage } = require('../../utils/sendMessage'); 
 
 // Profile command handler
 // async function handleProfileCommand(ctx) {
@@ -242,10 +241,7 @@ Please select your vehicle type:`;
     }
   ]);
 
-  // Set up the stage with the wizard
-  const stage = new Scenes.Stage([registrationWizard]);
-  bot.use(stage.middleware());
-
+ 
 
  
   } catch (error) {
