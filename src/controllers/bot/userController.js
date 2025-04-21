@@ -4,11 +4,28 @@ const { verifyNIN } = require('../../services/ninVerification');
 const { sendMessage } = require('../../utils/sendMessage');
 const { bot } = require('../../config/telegram');
 
+// Helper function to delete recent messages
+async function deleteMessages(ctx) {
+  try {
+    // Delete bot's message if it exists
+    if (ctx.message?.message_id) {
+      await ctx.deleteMessage(ctx.message.message_id).catch(() => {});
+    }
+    // Delete user's message if it exists
+    if (ctx.message?.message_id - 1) {
+      await ctx.deleteMessage(ctx.message.message_id - 1).catch(() => {});
+    }
+  } catch (error) {
+    console.error('Error deleting messages:', error);
+  }
+}
+
 // Create registration wizard scene
 const registrationWizard = new Scenes.WizardScene(
   'registration',
   // Step 1 - Role Selection
   async (ctx) => {
+    await deleteMessages(ctx);
     await sendMessage(ctx, 'Please select your role: ', {
       reply_markup: {
         keyboard: [
@@ -22,36 +39,68 @@ const registrationWizard = new Scenes.WizardScene(
   },
   // Step 2 - Full Name
   async (ctx) => {
+    await deleteMessages(ctx);
     ctx.wizard.state.role = ctx.message.text.includes('Rider') ? 'rider' : 'errander';
     await sendMessage(ctx, 'Please enter your full name (Surname FirstName):');
     return ctx.wizard.next();
   },
   // Step 3 - Phone Number
   async (ctx) => {
+    await deleteMessages(ctx);
     ctx.wizard.state.fullName = ctx.message.text;
     await sendMessage(ctx, 'Please enter your phone number:');
     return ctx.wizard.next();
   },
-  // Step 4 - Bank Account Number
+  // Step 4 - Location
   async (ctx) => {
+    await deleteMessages(ctx);
     ctx.wizard.state.phoneNumber = ctx.message.text;
+    await sendMessage(ctx, 'Please share your location:', {
+      reply_markup: {
+        keyboard: [[{ text: '📍 Share Location', request_location: true }]],
+        resize_keyboard: true,
+        one_time_keyboard: true
+      }
+    });
+    return ctx.wizard.next();
+  },
+  // Step 5 - Bank Account Number
+  async (ctx) => {
+    await deleteMessages(ctx);
+    if (!ctx.message.location) {
+      await sendMessage(ctx, 'Please share your location using the button below:', {
+        reply_markup: {
+          keyboard: [[{ text: '📍 Share Location', request_location: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+      return;
+    }
+    ctx.wizard.state.location = {
+      latitude: ctx.message.location.latitude,
+      longitude: ctx.message.location.longitude
+    };
     await sendMessage(ctx, 'Please enter your bank account number:');
     return ctx.wizard.next();
   },
-  // Step 5 - Bank Name
+  // Step 6 - Bank Name
   async (ctx) => {
+    await deleteMessages(ctx);
     ctx.wizard.state.bankAccountNumber = ctx.message.text;
     await sendMessage(ctx, 'Please enter your bank name:');
     return ctx.wizard.next();
   },
-  // Step 6 - Account Name
+  // Step 7 - Account Name
   async (ctx) => {
+    await deleteMessages(ctx);
     ctx.wizard.state.bankName = ctx.message.text;
     await sendMessage(ctx, 'Please enter your account name:');
     return ctx.wizard.next();
   },
-  // Step 7 - Vehicle Type (for riders only)
+  // Step 8 - Vehicle Type (for riders only)
   async (ctx) => {
+    await deleteMessages(ctx);
     ctx.wizard.state.accountName = ctx.message.text;
     if (ctx.wizard.state.role === 'rider') {
       await sendMessage(ctx, 'Please select your vehicle type:', {
@@ -70,16 +119,18 @@ const registrationWizard = new Scenes.WizardScene(
     }
     return ctx.wizard.next();
   },
-  // Step 8 - NIN
+  // Step 9 - NIN
   async (ctx) => {
+    await deleteMessages(ctx);
     if (ctx.wizard.state.role === 'rider') {
       ctx.wizard.state.vehicleType = ctx.message.text.split(' ')[1];
     }
     await sendMessage(ctx, 'Please enter your NIN (National Identification Number):');
     return ctx.wizard.next();
   },
-  // Step 9 - Photo
+  // Step 10 - Photo
   async (ctx) => {
+    await deleteMessages(ctx);
     ctx.wizard.state.nin = ctx.message.text;
     // Verify NIN
     const ninVerification = await verifyNIN(ctx.wizard.state.nin);
@@ -96,8 +147,9 @@ const registrationWizard = new Scenes.WizardScene(
     });
     return ctx.wizard.next();
   },
-  // Step 10 - Eligibility Slip
+  // Step 11 - Eligibility Slip
   async (ctx) => {
+    await deleteMessages(ctx);
     if (!ctx.message.photo) {
       await sendMessage(ctx, 'Please send a photo. Try again:');
       return;
@@ -108,6 +160,7 @@ const registrationWizard = new Scenes.WizardScene(
   },
   // Final Step - Create User
   async (ctx) => {
+    await deleteMessages(ctx);
     try {
       if (!ctx.message.document) {
         await sendMessage(ctx, 'Please upload a document. Try again:');
@@ -118,6 +171,7 @@ const registrationWizard = new Scenes.WizardScene(
         telegramId: ctx.from.id.toString(),
         fullName: ctx.wizard.state.fullName,
         phoneNumber: ctx.wizard.state.phoneNumber,
+        location: ctx.wizard.state.location,
         bankAccountDetails: {
           accountNumber: ctx.wizard.state.bankAccountNumber,
           bankName: ctx.wizard.state.bankName,
@@ -339,6 +393,7 @@ async function createUser(data) {
     telegramId: data.telegramId,
     fullName: data.fullName,
     phoneNumber: data.phoneNumber,
+    location: data.location,
     bankAccountDetails: {bankName: data.bankName, accountNumber: data.bankAccountNumber, accountName: data.accountName},
     photograph: data.photograph,
     nin: data.nin,
