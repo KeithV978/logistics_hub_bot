@@ -5,18 +5,28 @@ const { calculateDistance } = require('../../utils/location');
 const { Op } = require('sequelize');
 const { bot } = require('../../config/telegram');
 
-// Helper function to delete recent messages
+// Helper function to delete messages
 async function deleteMessages(ctx) {
   try {
-    if (ctx.message?.message_id) {
-      await ctx.deleteMessage(ctx.message.message_id).catch(() => {});
-    }
-    if (ctx.message?.message_id - 1) {
-      await ctx.deleteMessage(ctx.message.message_id - 1).catch(() => {});
+    // Delete all tracked messages
+    if (ctx.wizard.state.messageIds && ctx.wizard.state.messageIds.length > 0) {
+      for (const messageId of ctx.wizard.state.messageIds) {
+        await ctx.deleteMessage(messageId).catch(() => {});
+      }
+      ctx.wizard.state.messageIds = []; // Clear the tracked messages
     }
   } catch (error) {
     console.error('Error deleting messages:', error);
   }
+}
+
+// Helper function to track sent messages
+async function trackMessage(ctx, message) {
+  if (!ctx.wizard.state.messageIds) {
+    ctx.wizard.state.messageIds = [];
+  }
+  ctx.wizard.state.messageIds.push(message.message_id);
+  return message;
 }
 
 // Create delivery order wizard
@@ -24,13 +34,18 @@ const deliveryOrderWizard = new Scenes.WizardScene(
   'delivery_order',
   // Step 1 - Pickup Location
   async (ctx) => {
-    await deleteMessages(ctx);
     // Initialize wizard state
     ctx.wizard.state = {
-      customerTelegramId: ctx.from.id.toString()
+      customerTelegramId: ctx.from.id.toString(),
+      messageIds: [] // Initialize message tracking array
     };
 
-    await sendMessage(ctx, 'Please share the pickup location or type the address if it\'s not on the map:', {
+    // Track the welcome message if it exists
+    if (ctx.message?.message_id) {
+      ctx.wizard.state.messageIds.push(ctx.message.message_id);
+    }
+
+    const message = await sendMessage(ctx, 'Please share the pickup location or type the address if it\'s not on the map:', {
       reply_markup: {
         keyboard: [
           [{ text: '📍 Share Pickup Location', request_location: true }],
@@ -40,76 +55,145 @@ const deliveryOrderWizard = new Scenes.WizardScene(
         one_time_keyboard: true
       }
     });
-    await sendMessage(ctx, 'Please share the pickup location:', {
-      reply_markup: {
-        keyboard: [[{ text: '📍 Share Pickup Location', request_location: true }]],
-        resize_keyboard: true,
-        one_time_keyboard: true
-      }
-    });
+    await trackMessage(ctx, message);
     return ctx.wizard.next();
   },
   // Step 2 - Dropoff Location
   async (ctx) => {
-    await deleteMessages(ctx);
-    if (!ctx.message.location) {
-      await sendMessage(ctx, 'Please share a valid pickup location:', {
+    // Track user's response
+    if (ctx.message?.message_id) {
+      ctx.wizard.state.messageIds.push(ctx.message.message_id);
+    }
+
+    if (!ctx.message.location && ctx.message.text !== 'Type Address Instead') {
+      const message = await sendMessage(ctx, 'Please share a valid pickup location or choose to type the address:', {
         reply_markup: {
-          keyboard: [[{ text: '📍 Share Pickup Location', request_location: true }]],
+          keyboard: [
+            [{ text: '📍 Share Pickup Location', request_location: true }],
+            ['Type Address Instead']
+          ],
           resize_keyboard: true,
           one_time_keyboard: true
         }
       });
+      await trackMessage(ctx, message);
       return;
     }
-    
-    ctx.wizard.state.pickupLocation = {
-      latitude: ctx.message.location.latitude,
-      longitude: ctx.message.location.longitude
-    };
 
-    await sendMessage(ctx, 'Great! Now share the drop-off location:', {
+    // Store pickup location
+    if (ctx.message.location) {
+      ctx.wizard.state.pickupLocation = {
+        latitude: ctx.message.location.latitude,
+        longitude: ctx.message.location.longitude
+      };
+    } else {
+      // If user chose to type address, prompt for it
+      const message = await sendMessage(ctx, 'Please type the pickup address:');
+      await trackMessage(ctx, message);
+      ctx.wizard.state.awaitingPickupAddress = true;
+      return;
+    }
+
+    await deleteMessages(ctx);
+    const message = await sendMessage(ctx, 'Great! Now share the drop-off location or type the address:', {
       reply_markup: {
-        keyboard: [[{ text: '📍 Share Drop-off Location', request_location: true }]],
+        keyboard: [
+          [{ text: '📍 Share Drop-off Location', request_location: true }],
+          ['Type Address Instead']
+        ],
         resize_keyboard: true,
         one_time_keyboard: true
       }
     });
+    await trackMessage(ctx, message);
     return ctx.wizard.next();
   },
   // Step 3 - Instructions
   async (ctx) => {
-    await deleteMessages(ctx);
-    if (!ctx.message.location) {
-      await sendMessage(ctx, 'Please share a valid drop-off location:', {
+    // Track user's response
+    if (ctx.message?.message_id) {
+      ctx.wizard.state.messageIds.push(ctx.message.message_id);
+    }
+
+    if (ctx.wizard.state.awaitingPickupAddress) {
+      ctx.wizard.state.pickupLocation = {
+        address: ctx.message.text
+      };
+      ctx.wizard.state.awaitingPickupAddress = false;
+      const message = await sendMessage(ctx, 'Great! Now share the drop-off location or type the address:', {
         reply_markup: {
-          keyboard: [[{ text: '📍 Share Drop-off Location', request_location: true }]],
+          keyboard: [
+            [{ text: '📍 Share Drop-off Location', request_location: true }],
+            ['Type Address Instead']
+          ],
           resize_keyboard: true,
           one_time_keyboard: true
         }
       });
+      await trackMessage(ctx, message);
       return;
     }
 
-    ctx.wizard.state.dropoffLocation = {
-      latitude: ctx.message.location.latitude,
-      longitude: ctx.message.location.longitude
-    };
+    if (!ctx.message.location && ctx.message.text !== 'Type Address Instead') {
+      const message = await sendMessage(ctx, 'Please share a valid drop-off location or choose to type the address:', {
+        reply_markup: {
+          keyboard: [
+            [{ text: '📍 Share Drop-off Location', request_location: true }],
+            ['Type Address Instead']
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+      await trackMessage(ctx, message);
+      return;
+    }
 
-    await sendMessage(ctx, 'Please provide any delivery instructions (e.g., "fragile items", "call upon arrival"):', {
+    if (ctx.message.location) {
+      ctx.wizard.state.dropoffLocation = {
+        latitude: ctx.message.location.latitude,
+        longitude: ctx.message.location.longitude
+      };
+    } else {
+      // If user chose to type address, prompt for it
+      const message = await sendMessage(ctx, 'Please type the drop-off address:');
+      await trackMessage(ctx, message);
+      ctx.wizard.state.awaitingDropoffAddress = true;
+      return;
+    }
+
+    await deleteMessages(ctx);
+    const message = await sendMessage(ctx, 'Please provide any delivery instructions (e.g., "fragile items", "call upon arrival"):', {
       reply_markup: { remove_keyboard: true }
     });
+    await trackMessage(ctx, message);
     return ctx.wizard.next();
   },
   // Final Step - Create Order and Notify Riders
   async (ctx) => {
-    await deleteMessages(ctx);
+    // Track user's response
+    if (ctx.message?.message_id) {
+      ctx.wizard.state.messageIds.push(ctx.message.message_id);
+    }
+
+    if (ctx.wizard.state.awaitingDropoffAddress) {
+      ctx.wizard.state.dropoffLocation = {
+        address: ctx.message.text
+      };
+      ctx.wizard.state.awaitingDropoffAddress = false;
+      const message = await sendMessage(ctx, 'Please provide any delivery instructions (e.g., "fragile items", "call upon arrival"):', {
+        reply_markup: { remove_keyboard: true }
+      });
+      await trackMessage(ctx, message);
+      return;
+    }
+
     try {
       const instructions = ctx.message.text;
       
       // Create the order
       const order = await Order.create({
-        customerTelegramId: ctx.from.id.toString(),
+        customerTelegramId: ctx.wizard.state.customerTelegramId,
         type: 'delivery',
         pickupLocation: ctx.wizard.state.pickupLocation,
         dropoffLocation: ctx.wizard.state.dropoffLocation,
@@ -118,7 +202,9 @@ const deliveryOrderWizard = new Scenes.WizardScene(
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
       });
 
-      // Find riders within 5km radius of pickup location
+      await deleteMessages(ctx);
+
+      // Find and notify riders
       const nearbyRiders = await User.findAll({
         where: {
           role: 'rider',
@@ -135,42 +221,57 @@ const deliveryOrderWizard = new Scenes.WizardScene(
       const availableRiders = nearbyRiders.filter(rider => {
         if (!rider.currentLocation) return false;
         
-        const distance = calculateDistance(
-          ctx.wizard.state.pickupLocation.latitude,
-          ctx.wizard.state.pickupLocation.longitude,
-          rider.currentLocation.latitude,
-          rider.currentLocation.longitude
-        );
-        
-        return distance <= maxDistance;
+        if (ctx.wizard.state.pickupLocation.latitude) {
+          const distance = calculateDistance(
+            ctx.wizard.state.pickupLocation.latitude,
+            ctx.wizard.state.pickupLocation.longitude,
+            rider.currentLocation.latitude,
+            rider.currentLocation.longitude
+          );
+          return distance <= maxDistance;
+        }
+        return true; // Include all riders if using address instead of coordinates
       });
 
       // Notify customer about rider availability
+      let message;
       if (availableRiders.length === 0) {
-        await sendMessage(ctx, 'No riders found within 5km of the pickup location. Your order has been created and we\'ll notify riders as they become available.');
+        message = await sendMessage(ctx, 'No riders found within 5km of the pickup location. Your order has been created and we\'ll notify riders as they become available.');
       } else {
-        await sendMessage(ctx, `Found ${availableRiders.length} riders nearby! They will be notified of your order.`);
+        message = await sendMessage(ctx, `Found ${availableRiders.length} riders nearby! They will be notified of your order.`);
         
         // Notify each rider
         for (const rider of availableRiders) {
           const riderMessage = `
 🚨 New Delivery Order #${order.id}
 
-📍 Pickup: ${order.pickupLocation.latitude}, ${order.pickupLocation.longitude}
-🎯 Drop-off: ${order.dropoffLocation.latitude}, ${order.dropoffLocation.longitude}
-📝 Instructions: ${order.instructions}
+📍 Pickup: ${ctx.wizard.state.pickupLocation.address || `${ctx.wizard.state.pickupLocation.latitude}, ${ctx.wizard.state.pickupLocation.longitude}`}
+🎯 Drop-off: ${ctx.wizard.state.dropoffLocation.address || `${ctx.wizard.state.dropoffLocation.latitude}, ${ctx.wizard.state.dropoffLocation.longitude}`}
+📝 Instructions: ${instructions}
 
 Use /make_offer ${order.id} [price] to submit your offer.`;
 
           await bot.telegram.sendMessage(rider.telegramId, riderMessage);
         }
       }
+      await trackMessage(ctx, message);
 
-      await sendMessage(ctx, `Order created successfully! Your order ID is: ${order.id}\n\nUse /track_order ${order.id} to check the status of your order.`);
+      const finalMessage = await sendMessage(ctx, `Order created successfully! Your order ID is: ${order.id}\n\nUse /track_order ${order.id} to check the status of your order.`);
+      await trackMessage(ctx, finalMessage);
+      
+      // Clean up all messages after a short delay
+      setTimeout(async () => {
+        await deleteMessages(ctx);
+      }, 5000);
+
       return ctx.scene.leave();
     } catch (error) {
       console.error('Error creating order:', error);
-      await sendMessage(ctx, 'Sorry, something went wrong while creating your order. Please try again.');
+      const errorMessage = await sendMessage(ctx, 'Sorry, something went wrong while creating your order. Please try again.');
+      await trackMessage(ctx, errorMessage);
+      setTimeout(async () => {
+        await deleteMessages(ctx);
+      }, 5000);
       return ctx.scene.leave();
     }
   }
@@ -215,54 +316,54 @@ async function handleCancelDelivery(ctx){}
 async function handleDeliveryStatus(ctx){}
 
 
-async function handleFetchOrderCommand(ctx){
-  const orders = await Order.findAll({
-    where: {
-      customerTelegramId: ctx.from.id.toString()
-    },
-    order: [['createdAt', 'DESC']]
-  });
+// async function handleFetchOrderCommand(ctx){
+//   const orders = await Order.findAll({
+//     where: {
+//       customerTelegramId: ctx.from.id.toString()
+//     },
+//     order: [['createdAt', 'DESC']]
+//   });
 
-  if (orders.length === 0) {
-    return sendMessage(ctx, 'You have no previous orders.');
-  }
+//   if (orders.length === 0) {
+//     return sendMessage(ctx, 'You have no previous orders.');
+//   }
 
-  const ordersList = orders.map(order => 
-    `Order #${order.id}\nStatus: ${order.status}\nCreated: ${order.createdAt.toLocaleDateString()}`
-  ).join('\n\n');
+//   const ordersList = orders.map(order => 
+//     `Order #${order.id}\nStatus: ${order.status}\nCreated: ${order.createdAt.toLocaleDateString()}`
+//   ).join('\n\n');
 
-  return sendMessage(ctx, `Your orders:\n\n${ordersList}`);
-  }
+//   return sendMessage(ctx, `Your orders:\n\n${ordersList}`);
+//   }
 
 // Create errand command handler
-async function handleCreateErrandCommand(ctx) {
-  try {
-    if (!ctx.state.user) {
-      return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
-    }
+// async function handleCreateErrandCommand(ctx) {
+//   try {
+//     if (!ctx.state.user) {
+//       return sendMessage(ctx, 'Please register first using /register_rider or /register_errander.');
+//     }
 
-    ctx.session = {
-      orderCreation: {
-        type: 'errand',
-        step: 'location',
-        customerTelegramId: ctx.from.id.toString()
-      }
-    };
+//     ctx.session = {
+//       orderCreation: {
+//         type: 'errand',
+//         step: 'location',
+//         customerTelegramId: ctx.from.id.toString()
+//       }
+//     };
 
-    return sendMessage(ctx, 'Please share the errand location:', {
-      reply_markup: {
-        keyboard: [[Markup.button.locationRequest('📍 Share Errand Location')]],
-        resize_keyboard: true,
-        one_time_keyboard: true
-      }
-    });
-  } catch (error) {
-    console.error('Error in create errand command:', error);
-    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.', {
-      reply_markup: { remove_keyboard: true }
-    });
-  }
-} 
+//     return sendMessage(ctx, 'Please share the errand location:', {
+//       reply_markup: {
+//         keyboard: [[Markup.button.locationRequest('📍 Share Errand Location')]],
+//         resize_keyboard: true,
+//         one_time_keyboard: true
+//       }
+//     });
+//   } catch (error) {
+//     console.error('Error in create errand command:', error);
+//     return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.', {
+//       reply_markup: { remove_keyboard: true }
+//     });
+//   }
+// } 
 // Handle location updates for orders
 async function handleOrderLocation(ctx) {
   if (!ctx.session?.orderCreation) return;
