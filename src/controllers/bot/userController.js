@@ -58,7 +58,7 @@ async function handleRegistrationCommand(ctx) {
       Let's get started! 🚀`);
           
           // Enter the registration wizard scene
-          ctx.scene.enter('registrationWizard');
+          // ctx.scene.enter('registrationWizard');
         // } catch (error) {
         //   console.error('Error starting registration wizard:', error);
         //   return ctx.reply('Sorry, there was an error starting the registration process. Please try again later.');
