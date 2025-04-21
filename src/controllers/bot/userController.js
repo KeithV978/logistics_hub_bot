@@ -43,7 +43,7 @@ async function handleRegistrationCommand(ctx) {
     //   step: 'role'
     // };
     // Display welcome message
-    await ctx.reply(`👋 Welcome to the registration process!
+    await ctx.reply(`👋 Welcome to the signup wizard!
 
       I'll guide you through creating your account step by step.
       
@@ -59,13 +59,13 @@ async function handleRegistrationCommand(ctx) {
       Let's get started! 🚀`);
           
           // Enter the registration wizard scene
-          ctx.scene.enter('registrationWizard');
+          // ctx.scene.enter('registrationWizard');
         // } catch (error) {
         //   console.error('Error starting registration wizard:', error);
         //   return ctx.reply('Sorry, there was an error starting the registration process. Please try again later.');
         // } 
   // Create registration wizard scene
-  const registrationWizard = new Scenes.WizardScene(
+  const registrationWizard = new Scenes.WizardScene.enter(
     'registrationWizard',
     // Step 1 - Full Name
     async (ctx) => {
