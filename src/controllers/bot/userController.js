@@ -181,7 +181,7 @@ async function handleRegistrationCommand(ctx) {
           
   } catch (error) {
     console.error('Error in registration command:', error);
-    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.');
+    return sendMessage(ctx, 'Sorry, something went wrong. Please try again later.' + error);
   }
 } 
 
