@@ -58,11 +58,11 @@ const User = sequelize.define('User', {
     allowNull: true,
   },
   currentLocation: {
-    type: DataTypes.JSONB,
+    type: DataTypes.GEOGRAPHY('POINT', 4326),
     allowNull: true,
   },
   lastLocationUpdate: {
-    type: DataTypes.DATE,
+    type: DataTypes.GEOGRAPHY('POINT', 4326),
     allowNull: true,
   },
 });
