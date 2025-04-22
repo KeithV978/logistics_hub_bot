@@ -311,6 +311,7 @@ async function createUser(data) {
     role: data.role,
     vehicleType: data.vehicleType,
     currentLocation: data.location,
+    lastLocationUpdate: new Date(),
     isVerified: false,
     isActive: true,
     feedback: {

@@ -8,8 +8,8 @@ const Order = require('./Order');
 const models = {
   User,
   Order,
-  Offer,
-  Review
+  // Offer,
+  // Review
 };
 
 // User - Order relationships
