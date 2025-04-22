@@ -37,7 +37,7 @@ const Order = sequelize.define('Order', {
       latitude: null,
       longitude: null,
       address: null,
-  }},
+  }, allowNull: true},
   dropoffLocation: {
     type: DataTypes.JSON,
     defaultValue: {
