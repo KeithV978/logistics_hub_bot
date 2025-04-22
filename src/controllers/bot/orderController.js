@@ -1,20 +1,26 @@
 const { Markup, Scenes } = require('telegraf');
 const { Order, User } = require('../../models');
 const { sendMessage } = require('../../utils/sendMessage');
-const { calculateDistance } = require('../../utils/location');
+const { calculateDistance, formatLocation } = require('../../utils/location');
 const { Op } = require('sequelize');
 const { bot } = require('../../config/telegram');
 
 // Helper function to delete messages
 async function deleteMessages(ctx) {
   try {
-    // Delete all tracked messages
-    if (ctx.wizard.state.messageIds && ctx.wizard.state.messageIds.length > 0) {
-      for (const messageId of ctx.wizard.state.messageIds) {
-        await ctx.deleteMessage(messageId).catch(() => {});
-      }
-      ctx.wizard.state.messageIds = []; // Clear the tracked messages
+    // Ensure state and messageIds exist
+    if (!ctx.wizard.state) {
+      ctx.wizard.state = {};
     }
+    if (!ctx.wizard.state.messageIds) {
+      ctx.wizard.state.messageIds = [];
+    }
+
+    // Delete all tracked messages
+    for (const messageId of ctx.wizard.state.messageIds) {
+      await ctx.deleteMessage(messageId).catch(() => {});
+    }
+    ctx.wizard.state.messageIds = []; // Clear the tracked messages
   } catch (error) {
     console.error('Error deleting messages:', error);
   }
@@ -22,11 +28,24 @@ async function deleteMessages(ctx) {
 
 // Helper function to track sent messages
 async function trackMessage(ctx, message) {
-  if (!ctx.wizard.state.messageIds) {
-    ctx.wizard.state.messageIds = [];
+  try {
+    // Ensure state and messageIds exist
+    if (!ctx.wizard.state) {
+      ctx.wizard.state = {};
+    }
+    if (!ctx.wizard.state.messageIds) {
+      ctx.wizard.state.messageIds = [];
+    }
+
+    // Only track messages with valid message_id
+    if (message && message.message_id) {
+      ctx.wizard.state.messageIds.push(message.message_id);
+    }
+    return message;
+  } catch (error) {
+    console.error('Error tracking message:', error);
+    return message;
   }
-  ctx.wizard.state.messageIds.push(message.message_id);
-  return message;
 }
 
 // Create delivery order wizard
@@ -34,29 +53,39 @@ const deliveryOrderWizard = new Scenes.WizardScene(
   'delivery_order',
   // Step 1 - Pickup Location
   async (ctx) => {
-    // Initialize wizard state
-    ctx.wizard.state = {
-      customerTelegramId: ctx.from.id.toString(),
-      messageIds: [] // Initialize message tracking array
-    };
+    try {
+      // Initialize wizard state with empty arrays
+      ctx.wizard.state = {
+        customerTelegramId: ctx.from.id.toString(),
+        messageIds: [] // Initialize message tracking array
+      };
 
-    // Track the welcome message if it exists
-    if (ctx.message?.message_id) {
-      ctx.wizard.state.messageIds.push(ctx.message.message_id);
-    }
-
-    const message = await sendMessage(ctx, 'Please share the pickup location or type the address if it\'s not on the map:', {
-      reply_markup: {
-        keyboard: [
-          [{ text: '📍 Share Pickup Location', request_location: true }],
-          ['Type Address Instead']
-        ],
-        resize_keyboard: true,
-        one_time_keyboard: true
+      // Track the welcome message if it exists
+      if (ctx.message && ctx.message.message_id) {
+        ctx.wizard.state.messageIds.push(ctx.message.message_id);
       }
-    });
-    await trackMessage(ctx, message);
-    return ctx.wizard.next();
+
+      const message = await sendMessage(ctx, 'Please share the pickup location or type the address if it\'s not on the map:', {
+        reply_markup: {
+          keyboard: [
+            [{ text: '📍 Share Pickup Location', request_location: true }],
+            ['Type Address Instead']
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+
+      if (message && message.message_id) {
+        ctx.wizard.state.messageIds.push(message.message_id);
+      }
+
+      return ctx.wizard.next();
+    } catch (error) {
+      console.error('Error in pickup location step:', error);
+      await sendMessage(ctx, 'Sorry, something went wrong. Please try /create_order again.');
+      return ctx.scene.leave();
+    }
   },
   // Step 2 - Dropoff Location
   async (ctx) => {
