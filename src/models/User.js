@@ -59,14 +59,25 @@ const User = sequelize.define('User', {
   },
   currentLocation: {
     type: DataTypes.JSONB,
-    allowNull: false,
+    allowNull: true,
+    defaultValue: null,
     comment: 'Stores location as {latitude: number, longitude: number} or {address: string}'
   },
   lastLocationUpdate: {
-    type: DataTypes.JSONB,
+    type: DataTypes.DATE,
     allowNull: true,
-    comment: 'Stores location as {latitude: number, longitude: number} or {address: string}'
   },
+});
+
+// Add a hook to ensure currentLocation is always in the correct format when set
+User.beforeSave(async (user, options) => {
+  if (user.changed('currentLocation') && user.currentLocation) {
+    // Validate location format
+    const location = user.currentLocation;
+    if (!(location.latitude && location.longitude) && !location.address) {
+      throw new Error('Invalid location format. Must have either {latitude, longitude} or {address}');
+    }
+  }
 });
 
 module.exports = User; 
