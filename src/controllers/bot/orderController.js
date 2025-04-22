@@ -204,41 +204,63 @@ const deliveryOrderWizard = new Scenes.WizardScene(
 
       await deleteMessages(ctx);
 
-      // Find and notify riders
-      const nearbyRiders = await User.findAll({
-        where: {
-          role: 'rider',
-          isVerified: true,
-          isActive: true,
-          currentLocation: {
-            [Op.not]: null
+      // Find and notify riders with dynamic radius
+      let radius = 3; // Start with 3km radius
+      let availableRiders = [];
+      
+      while (radius <= 12) { // Maximum 12km radius
+        // Find active and verified riders
+        const riders = await User.findAll({
+          where: {
+            role: 'rider',
+            isVerified: true,
+            isActive: true,
+            currentLocation: {
+              [Op.not]: null
+            }
           }
-        }
-      });
+        });
 
-      // Filter riders by distance and notify them
-      const maxDistance = 5; // 5km radius
-      const availableRiders = nearbyRiders.filter(rider => {
-        if (!rider.currentLocation) return false;
-        
-        if (ctx.wizard.state.pickupLocation.latitude) {
-          const distance = calculateDistance(
-            ctx.wizard.state.pickupLocation.latitude,
-            ctx.wizard.state.pickupLocation.longitude,
-            rider.currentLocation.latitude,
-            rider.currentLocation.longitude
-          );
-          return distance <= maxDistance;
+        // Filter riders by current radius
+        availableRiders = riders.filter(rider => {
+          if (!rider.currentLocation?.latitude || !rider.currentLocation?.longitude) {
+            return false;
+          }
+
+          // Only calculate distance for coordinate-based locations
+          if (ctx.wizard.state.pickupLocation.latitude) {
+            const distance = calculateDistance(
+              ctx.wizard.state.pickupLocation.latitude,
+              ctx.wizard.state.pickupLocation.longitude,
+              rider.currentLocation.latitude,
+              rider.currentLocation.longitude
+            );
+            return distance <= radius;
+          }
+          return false; // Skip if using address-based location
+        });
+
+        // If riders found, break the loop
+        if (availableRiders.length > 0) {
+          break;
         }
-        return true; // Include all riders if using address instead of coordinates
-      });
+
+        // Increase radius by 3km and try again
+        radius += 3;
+      }
 
       // Notify customer about rider availability
       let message;
       if (availableRiders.length === 0) {
-        message = await sendMessage(ctx, 'No riders found within 5km of the pickup location. Your order has been created and we\'ll notify riders as they become available.');
+        message = await sendMessage(
+          ctx, 
+          'No riders found within 12km of the pickup location. Your order has been created and we\'ll notify riders as they become available.'
+        );
       } else {
-        message = await sendMessage(ctx, `Found ${availableRiders.length} riders nearby! They will be notified of your order.`);
+        message = await sendMessage(
+          ctx, 
+          `Found ${availableRiders.length} rider${availableRiders.length === 1 ? '' : 's'} within ${radius}km! They will be notified of your order.`
+        );
         
         // Notify each rider
         for (const rider of availableRiders) {
@@ -248,6 +270,12 @@ const deliveryOrderWizard = new Scenes.WizardScene(
 📍 Pickup: ${ctx.wizard.state.pickupLocation.address || `${ctx.wizard.state.pickupLocation.latitude}, ${ctx.wizard.state.pickupLocation.longitude}`}
 🎯 Drop-off: ${ctx.wizard.state.dropoffLocation.address || `${ctx.wizard.state.dropoffLocation.latitude}, ${ctx.wizard.state.dropoffLocation.longitude}`}
 📝 Instructions: ${instructions}
+📍 Distance from you: ${calculateDistance(
+            ctx.wizard.state.pickupLocation.latitude,
+            ctx.wizard.state.pickupLocation.longitude,
+            rider.currentLocation.latitude,
+            rider.currentLocation.longitude
+          ).toFixed(1)}km
 
 Use /make_offer ${order.id} [price] to submit your offer.`;
 
@@ -256,7 +284,10 @@ Use /make_offer ${order.id} [price] to submit your offer.`;
       }
       await trackMessage(ctx, message);
 
-      const finalMessage = await sendMessage(ctx, `Order created successfully! Your order ID is: ${order.id}\n\nUse /track_order ${order.id} to check the status of your order.`);
+      const finalMessage = await sendMessage(
+        ctx, 
+        `Order #${order.id} created successfully!\n\nUse /track_order ${order.id} to check the status of your order.`
+      );
       await trackMessage(ctx, finalMessage);
       
       // Clean up all messages after a short delay
