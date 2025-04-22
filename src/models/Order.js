@@ -34,18 +34,15 @@ const Order = sequelize.define('Order', {
   pickupLocation: {
     type: DataTypes.JSONB,
     allowNull: true, // Null for errands
-    comment: 'Stores location as {latitude: number, longitude: number} or {address: string}'
-  },
+    },
   dropoffLocation: {
     type: DataTypes.JSONB,
     allowNull: true, // Null for errands
-    comment: 'Stores location as {latitude: number, longitude: number} or {address: string}'
-  },
+    },
   errandLocation: {
     type: DataTypes.JSONB,
     allowNull: true, // Only for errands
-    comment: 'Stores location as {latitude: number, longitude: number} or {address: string}'
-  },
+     },
   instructions: {
     type: DataTypes.TEXT,
     allowNull: false,

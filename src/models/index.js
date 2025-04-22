@@ -1,8 +1,8 @@
 const sequelize = require('../config/database');
 const User = require('./User');
 const Order = require('./Order');
-const Offer = require('./Offer');
-const Review = require('./Review');
+// const Offer = require('./Offer');
+// const Review = require('./Review');
 
 // Initialize models in correct order
 const models = {
@@ -44,10 +44,10 @@ User.hasMany(Offer, {
   onDelete: 'CASCADE'
 });
 
-Offer.belongsTo(User, {
-  foreignKey: 'userId',
-  as: 'user'
-});
+// Offer.belongsTo(User, {
+//   foreignKey: 'userId',
+//   as: 'user'
+// });
 
 // Order - Offer relationships
 Order.hasMany(Offer, {
@@ -56,10 +56,10 @@ Order.hasMany(Offer, {
   onDelete: 'CASCADE'
 });
 
-Offer.belongsTo(Order, {
-  foreignKey: 'orderId',
-  as: 'order'
-});
+// Offer.belongsTo(Order, {
+//   foreignKey: 'orderId',
+//   as: 'order'
+// });
 
 // Review relationships
 Order.hasMany(Review, {
@@ -68,10 +68,10 @@ Order.hasMany(Review, {
   onDelete: 'CASCADE'
 });
 
-Review.belongsTo(Order, {
-  foreignKey: 'orderId',
-  as: 'order'
-});
+// Review.belongsTo(Order, {
+//   foreignKey: 'orderId',
+//   as: 'order'
+// });
 
 User.hasMany(Review, {
   foreignKey: 'reviewedUserId',
@@ -79,10 +79,10 @@ User.hasMany(Review, {
   onDelete: 'CASCADE'
 });
 
-Review.belongsTo(User, {
-  foreignKey: 'reviewedUserId',
-  as: 'reviewedUser'
-});
+// Review.belongsTo(User, {
+//   foreignKey: 'reviewedUserId',
+//   as: 'reviewedUser'
+// });
 
 User.hasMany(Review, {
   foreignKey: 'reviewerId',
@@ -91,11 +91,11 @@ User.hasMany(Review, {
   onDelete: 'CASCADE'
 });
 
-Review.belongsTo(User, {
-  foreignKey: 'reviewerId',
-  targetKey: 'telegramId',
-  as: 'reviewer'
-});
+// Review.belongsTo(User, {
+//   foreignKey: 'reviewerId',
+//   targetKey: 'telegramId',
+//   as: 'reviewer'
+// });
 
 // Test the connection
 sequelize
