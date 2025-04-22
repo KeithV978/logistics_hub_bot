@@ -1,5 +1,5 @@
 const { bot } = require('../config/telegram');
-const { User, Order, Offer } = require('../models');
+const { User, Order } = require('../models');
 const { Markup } = require('telegraf');
 const { Op } = require('sequelize');
 const { verifyNIN } = require('../services/ninVerification');
