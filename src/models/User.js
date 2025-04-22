@@ -67,16 +67,6 @@ const User = sequelize.define('User', {
     allowNull: true,
   },
 });
-
-// Add a hook to ensure currentLocation is always in the correct format when set
-User.beforeSave(async (user, options) => {
-  if (user.changed('currentLocation') && user.currentLocation) {
-    // Validate location format
-    const location = user.currentLocation;
-    if (!(location.latitude && location.longitude) && !location.address) {
-      throw new Error('Invalid location format. Must have either {latitude, longitude} or {address}');
-    }
-  }
-});
+ 
 
 module.exports = User; 
