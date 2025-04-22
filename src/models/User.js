@@ -61,8 +61,7 @@ const User = sequelize.define('User', {
     type: DataTypes.JSONB,
     allowNull: true,
     defaultValue: null,
-    comment: 'Stores location as {latitude: number, longitude: number} or {address: string}'
-  },
+      },
   lastLocationUpdate: {
     type: DataTypes.DATE,
     allowNull: true,
