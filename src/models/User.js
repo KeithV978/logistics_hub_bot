@@ -68,8 +68,7 @@ const User = sequelize.define('User', {
       longitude: null,
       
     },
-    allowNull: true,
-    defaultValue: null,
+    allowNull: true, 
       },
   lastLocationUpdate: {
     type: DataTypes.DATE,
