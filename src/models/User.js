@@ -57,16 +57,13 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  address: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
+   
   currentLocation: {
     type: DataTypes.JSON,
     defaultValue: {
       latitude: null,
       longitude: null,
-      
+      address: null
     },
     allowNull: true, 
       },

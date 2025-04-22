@@ -32,17 +32,26 @@ const Order = sequelize.define('Order', {
     defaultValue: 'pending',
   },
   pickupLocation: {
-    type: DataTypes.JSONB,
-    allowNull: true, // Null for errands
-    },
+    type: DataTypes.JSON,
+    defaultValue: {
+      latitude: null,
+      longitude: null,
+      address: null,
+  }},
   dropoffLocation: {
-    type: DataTypes.JSONB,
-    allowNull: true, // Null for errands
-    },
+    type: DataTypes.JSON,
+    defaultValue: {
+      latitude: null,
+      longitude: null,
+      address: null,
+   }, allowNull: true },
   errandLocation: {
-    type: DataTypes.JSONB,
-    allowNull: true, // Only for errands
-     },
+    type: DataTypes.JSON,
+    defaultValue: {
+      latitude: null,
+      longitude: null,
+      address: null, 
+   }, allowNull: true},
   instructions: {
     type: DataTypes.TEXT,
     allowNull: false,
