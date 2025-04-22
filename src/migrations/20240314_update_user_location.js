@@ -3,41 +3,34 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     try {
-      // Step 1: First make the column nullable
+      // Step 1: First make the column nullable and set default to null
       await queryInterface.sequelize.query(`
         ALTER TABLE "Users" 
-        ALTER COLUMN "currentLocation" DROP NOT NULL;
-      `);
-
-      // Step 2: Set default to null
-      await queryInterface.sequelize.query(`
-        ALTER TABLE "Users" 
+        ALTER COLUMN "currentLocation" DROP NOT NULL,
         ALTER COLUMN "currentLocation" SET DEFAULT NULL;
       `);
 
-      // Step 3: Update existing values to proper JSON format
+      // Step 2: Create a temporary JSONB column
       await queryInterface.sequelize.query(`
-        UPDATE "Users" 
-        SET "currentLocation" = 
-          CASE 
+        ALTER TABLE "Users"
+        ADD COLUMN "currentLocation_jsonb" JSONB;
+      `);
+
+      // Step 3: Convert existing data to JSONB in the temporary column
+      await queryInterface.sequelize.query(`
+        UPDATE "Users"
+        SET "currentLocation_jsonb" = 
+          CASE
             WHEN "currentLocation" IS NULL THEN NULL
-            WHEN "currentLocation" ~ '^[0-9.-]+,\s*[0-9.-]+$' THEN 
-              json_build_object(
-                'latitude', CAST(split_part("currentLocation", ',', 1) AS FLOAT),
-                'longitude', CAST(split_part("currentLocation", ',', 2) AS FLOAT)
-              )::jsonb
-            ELSE json_build_object('address', "currentLocation")::jsonb
+            ELSE to_jsonb("currentLocation")
           END;
       `);
 
-      // Step 4: Change the column type to JSONB with explicit conversion
+      // Step 4: Drop the old column and rename the new one
       await queryInterface.sequelize.query(`
-        ALTER TABLE "Users" 
-        ALTER COLUMN "currentLocation" TYPE JSONB 
-        USING CASE 
-          WHEN "currentLocation" IS NULL THEN NULL
-          ELSE "currentLocation"::jsonb
-        END;
+        ALTER TABLE "Users"
+        DROP COLUMN "currentLocation",
+        ALTER COLUMN "currentLocation_jsonb" RENAME TO "currentLocation";
       `);
 
       // Step 5: Add comment
@@ -52,27 +45,23 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     try {
-      // Convert JSONB data back to text format before changing type
+      // Step 1: Create a temporary TEXT column
       await queryInterface.sequelize.query(`
-        UPDATE "Users" 
-        SET "currentLocation" = 
-          CASE 
-            WHEN "currentLocation" IS NULL THEN NULL
-            WHEN "currentLocation"->>'latitude' IS NOT NULL THEN 
-              concat(
-                "currentLocation"->>'latitude', 
-                ',', 
-                "currentLocation"->>'longitude'
-              )
-            ELSE "currentLocation"->>'address'
-          END;
+        ALTER TABLE "Users"
+        ADD COLUMN "currentLocation_text" TEXT;
       `);
 
-      // Change type back to TEXT
+      // Step 2: Convert JSONB data back to text
       await queryInterface.sequelize.query(`
-        ALTER TABLE "Users" 
-        ALTER COLUMN "currentLocation" TYPE TEXT 
-        USING "currentLocation"::text;
+        UPDATE "Users"
+        SET "currentLocation_text" = "currentLocation"::TEXT;
+      `);
+
+      // Step 3: Drop the JSONB column and rename the text column
+      await queryInterface.sequelize.query(`
+        ALTER TABLE "Users"
+        DROP COLUMN "currentLocation",
+        ALTER COLUMN "currentLocation_text" RENAME TO "currentLocation";
       `);
     } catch (error) {
       console.error('Migration rollback failed:', error);
