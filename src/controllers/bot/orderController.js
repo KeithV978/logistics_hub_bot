@@ -195,8 +195,8 @@ const deliveryOrderWizard = new Scenes.WizardScene(
       const order = await Order.create({
         customerTelegramId: ctx.wizard.state.customerTelegramId,
         type: 'delivery',
-        pickupLocation: ctx.wizard.state.pickupLocation,
-        dropoffLocation: ctx.wizard.state.dropoffLocation,
+        pickupLocation: {latitude: ctx.wizard.state.pickupLocation.latitude, longitude: ctx.wizard.state.pickupLocation.longitude, address: ctx.wizard.state.pickupLocation.address},
+        dropoffLocation: {latitude: ctx.wizard.state.dropoffLocation.latitude, longitude: ctx.wizard.state.dropoffLocation.longitude, address: ctx.wizard.state.dropoffLocation.address},
         instructions: instructions,
         status: 'pending',
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now

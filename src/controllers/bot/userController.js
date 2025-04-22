@@ -310,9 +310,8 @@ async function createUser(data) {
     nin: data.nin,
     role: data.role,
     vehicleType: data.vehicleType,
-    currentLocation: {latitude: data.location.latitude, longitude: data.location.longitude},
-    address: data.location.address,
-    lastLocationUpdate: new Date(),
+    currentLocation: {latitude: data.location.latitude, longitude: data.location.longitude, address: data.location.address},
+    lastLocationUpdate: Date.now(),
     isVerified: false,
     isActive: true,
     feedback: {
