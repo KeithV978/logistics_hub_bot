@@ -38,11 +38,11 @@ User.hasMany(Order, {
 });
 
 // User - Offer relationships
-User.hasMany(Offer, {
-  foreignKey: 'userId',
-  as: 'offers',
-  onDelete: 'CASCADE'
-});
+// User.hasMany(Offer, {
+//   foreignKey: 'userId',
+//   as: 'offers',
+//   onDelete: 'CASCADE'
+// });
 
 // Offer.belongsTo(User, {
 //   foreignKey: 'userId',
@@ -50,11 +50,11 @@ User.hasMany(Offer, {
 // });
 
 // Order - Offer relationships
-Order.hasMany(Offer, {
-  foreignKey: 'orderId',
-  as: 'offers',
-  onDelete: 'CASCADE'
-});
+// Order.hasMany(Offer, {
+//   foreignKey: 'orderId',
+//   as: 'offers',
+//   onDelete: 'CASCADE'
+// });
 
 // Offer.belongsTo(Order, {
 //   foreignKey: 'orderId',
@@ -62,34 +62,34 @@ Order.hasMany(Offer, {
 // });
 
 // Review relationships
-Order.hasMany(Review, {
-  foreignKey: 'orderId',
-  as: 'reviews',
-  onDelete: 'CASCADE'
-});
+// Order.hasMany(Review, {
+//   foreignKey: 'orderId',
+//   as: 'reviews',
+//   onDelete: 'CASCADE'
+// });
 
 // Review.belongsTo(Order, {
 //   foreignKey: 'orderId',
 //   as: 'order'
 // });
 
-User.hasMany(Review, {
-  foreignKey: 'reviewedUserId',
-  as: 'receivedReviews',
-  onDelete: 'CASCADE'
-});
+// User.hasMany(Review, {
+//   foreignKey: 'reviewedUserId',
+//   as: 'receivedReviews',
+//   onDelete: 'CASCADE'
+// });
 
 // Review.belongsTo(User, {
 //   foreignKey: 'reviewedUserId',
 //   as: 'reviewedUser'
 // });
 
-User.hasMany(Review, {
-  foreignKey: 'reviewerId',
-  sourceKey: 'telegramId',
-  as: 'givenReviews',
-  onDelete: 'CASCADE'
-});
+// User.hasMany(Review, {
+//   foreignKey: 'reviewerId',
+//   sourceKey: 'telegramId',
+//   as: 'givenReviews',
+//   onDelete: 'CASCADE'
+// });
 
 // Review.belongsTo(User, {
 //   foreignKey: 'reviewerId',
