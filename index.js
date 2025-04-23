@@ -68,7 +68,7 @@ bot.use(async (ctx, next) => {
 bot.command('start', async (ctx) => {
   try {
     await ctx.cleanup();
-    const userName = ctx.from.first_name || ctx.from.username || 'there';
+    const userName = ctx.from.first_name || ctx.from.username || 'to you';
     const keyboard = {
       inline_keyboard: [
         [
@@ -86,7 +86,7 @@ bot.command('start', async (ctx) => {
     };
 
     await ctx.reply(
-      `Hello ${userName}! ${config.messages.welcome}`,
+      `${getTimeBasedGreeting}, ${userName}! ${config.messages.welcome}`,
       { reply_markup: keyboard }
     );
   } catch (error) {
