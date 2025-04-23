@@ -8,9 +8,10 @@ const registrationScene = new Scenes.WizardScene(
   // Step 1: Get full name
   async (ctx) => {
     try {
+      console.log({role: ctx.scene.state.role})
       // Get role from scene state (set during scene.enter)
       if (!ctx.scene.state.role) {
-        await ctx.reply('Invalid registration. Please use the signup buttons from the main menu. /start');
+        await ctx.reply('Invalid registration. Please use the signup buttons from the main menu /start.');
         return ctx.scene.leave();
       }
 
