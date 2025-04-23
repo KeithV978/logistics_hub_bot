@@ -33,6 +33,7 @@ const initDb = async () => {
         account_name VARCHAR(100),
         vehicle_type VARCHAR(50),
         nin VARCHAR(50),
+        eligibility_slip_file_id TEXT,
         verification_status VARCHAR(20) DEFAULT 'pending' CHECK (verification_status IN ('pending', 'verified', 'rejected')),
         rating DECIMAL(3,2) DEFAULT 0,
         total_ratings INTEGER DEFAULT 0,

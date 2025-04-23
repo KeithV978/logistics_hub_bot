@@ -109,7 +109,7 @@ const registrationScene = new Scenes.WizardScene(
       return ctx.scene.leave();
     }
   },
-  // Step 6: Get vehicle type (for riders) or NIN
+  // Step 6: Get vehicle type (for riders) or eligibility slip
   async (ctx) => {
     try {
       if (!ctx.message || !ctx.message.text) {
@@ -119,6 +119,42 @@ const registrationScene = new Scenes.WizardScene(
       
       ctx.scene.state.bankDetails.accountName = ctx.message.text;
       await ctx.cleanup();
+      
+      // Ask for eligibility slip upload
+      await ctx.reply('Please upload your eligibility slip document (photo or PDF, max 5MB):');
+      return ctx.wizard.next();
+    } catch (error) {
+      logger.error('Registration step 6 error:', error);
+      await ctx.reply('Sorry, there was an error. Please try /register again.');
+      return ctx.scene.leave();
+    }
+  },
+  // Step 7: Handle eligibility slip and get vehicle type (for riders) or NIN
+  async (ctx) => {
+    try {
+      // Check for file upload
+      const document = ctx.message?.document || ctx.message?.photo?.[0];
+      if (!document) {
+        await ctx.reply('Please upload a valid document (photo or PDF).');
+        return;
+      }
+
+      // Verify file size
+      if (document.file_size > config.MAX_PHOTO_SIZE) {
+        await ctx.reply(`File too large. Maximum size is ${config.MAX_PHOTO_SIZE / (1024 * 1024)}MB.`);
+        return;
+      }
+
+      // Verify file type for documents (not needed for photos as they're pre-validated by Telegram)
+      if (ctx.message?.document && !config.SUPPORTED_FILE_TYPES.includes(document.mime_type)) {
+        await ctx.reply(config.messages.invalidFileType);
+        return;
+      }
+
+      // Store file ID
+      ctx.scene.state.eligibilitySlipFileId = document.file_id;
+      await ctx.cleanup();
+      await ctx.reply(config.messages.uploadSuccess);
 
       if (ctx.scene.state.role === 'rider') {
         // Show vehicle type selection keyboard for riders
@@ -136,12 +172,12 @@ const registrationScene = new Scenes.WizardScene(
         return ctx.wizard.next();
       }
     } catch (error) {
-      logger.error('Registration step 6 error:', error);
+      logger.error('Registration step 7 error:', error);
       await ctx.reply('Sorry, there was an error. Please try /register again.');
       return ctx.scene.leave();
     }
   },
-  // Step 7: Get NIN (after vehicle type for riders)
+  // Step 8: Get NIN (after vehicle type for riders)
   async (ctx) => {
     try {
       if (!ctx.scene.state.skipVehicle) {
@@ -164,12 +200,12 @@ const registrationScene = new Scenes.WizardScene(
       ctx.scene.state.nin = ctx.message.text;
       return await completeRegistration(ctx);
     } catch (error) {
-      logger.error('Registration step 7 error:', error);
+      logger.error('Registration step 8 error:', error);
       await ctx.reply('Sorry, there was an error. Please try /register again.');
       return ctx.scene.leave();
     }
   },
-  // Step 8: Complete registration (for riders)
+  // Step 9: Complete registration (for riders)
   async (ctx) => {
     try {
       if (!ctx.message || !ctx.message.text) {
@@ -221,7 +257,8 @@ async function completeRegistration(ctx) {
       phoneNumber: ctx.scene.state.phoneNumber,
       bankAccount: ctx.scene.state.bankDetails,
       vehicleType: ctx.scene.state.vehicleType,
-      nin: ctx.scene.state.nin
+      nin: ctx.scene.state.nin,
+      eligibilitySlipFileId: ctx.scene.state.eligibilitySlipFileId
     });
     
     await ctx.reply(config.messages.verificationPending);

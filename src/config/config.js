@@ -33,6 +33,7 @@ module.exports = {
 
   // File Upload Limits
   MAX_PHOTO_SIZE: 5 * 1024 * 1024, // 5MB
+  SUPPORTED_FILE_TYPES: ['image/jpeg', 'image/png', 'application/pdf'],
 
   // Rating System
   MIN_RATING: 1,
@@ -59,6 +60,8 @@ module.exports = {
     transactionCompleted: "Transaction completed! Please rate your experience from 1-5 stars.",
     groupRules: `Welcome to the order group! 📦\n\nRules:\n1. Be respectful\n2. Share updates\n3. Report issues to admin\n\nHave a great experience! 🤝`,
     selectVehicle: "Please select your vehicle type:",
-    invalidVehicle: "Invalid vehicle type. Please select from the available options."
+    invalidVehicle: "Invalid vehicle type. Please select from the available options.",
+    invalidFileType: "Invalid file type. Please upload a PDF document or image (JPEG/PNG).",
+    uploadSuccess: "Document uploaded successfully."
   }
 };

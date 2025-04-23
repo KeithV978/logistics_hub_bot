@@ -18,10 +18,32 @@ class UserService {
         throw new Error('User already registered');
       }
 
-      // Create temporary user record with just telegram_id and role
+      // Create temporary user record with all required fields
       await db.query(
-        'INSERT INTO users (telegram_id, role) VALUES ($1, $2)',
-        [telegramId, role]
+        `INSERT INTO users (
+          telegram_id, 
+          role, 
+          full_name,
+          phone_number,
+          verification_status,
+          bank_name,
+          account_number,
+          account_name,
+          rating,
+          total_ratings
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          telegramId,
+          role,
+          'Pending Registration',  // temporary full name
+          '+0000000000',          // temporary phone number
+          'pending',              // default verification status
+          'Pending',             // temporary bank name
+          '0000000000',          // temporary account number
+          'Pending Registration', // temporary account name
+          0,                     // default rating
+          0                      // default total ratings
+        ]
       );
 
       return true;
@@ -36,7 +58,7 @@ class UserService {
    */
   static async updateRegistrationDetails(telegramId, details) {
     try {
-      const { fullName, phoneNumber, bankAccount, vehicleType, nin } = details;
+      const { fullName, phoneNumber, bankAccount, vehicleType, nin, eligibilitySlipFileId } = details;
       
       const result = await db.query(
         `UPDATE users 
@@ -47,8 +69,9 @@ class UserService {
              account_name = $5,
              vehicle_type = $6,
              nin = $7,
+             eligibility_slip_file_id = $8,
              updated_at = CURRENT_TIMESTAMP
-         WHERE telegram_id = $8
+         WHERE telegram_id = $9
          RETURNING *`,
         [
           fullName, 
@@ -57,7 +80,8 @@ class UserService {
           bankAccount.accountNumber,
           bankAccount.accountName,
           vehicleType || null,
-          nin, 
+          nin,
+          eligibilitySlipFileId,
           telegramId
         ]
       );
