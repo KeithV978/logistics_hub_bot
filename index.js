@@ -387,6 +387,7 @@ bot.on('text', async (ctx) => {
     }
   } catch (error) {
     logger.error('Text handling error:', error);
+    console.log({error: error.message});
     await ctx.reply('Sorry, there was an error processing your message. Please try again.');
   }
 });
