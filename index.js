@@ -17,9 +17,10 @@ const app = express();
 // Parse JSON payloads
 app.use(express.json());
 
-// Set up scenes
-const stage = new Scenes.Stage([registrationScene]);
+// Set up scenes and session
 bot.use(session());
+const stage = new Scenes.Stage([registrationScene]);
+bot.use(Telegraf.session());  // Add this line to ensure session support
 bot.use(stage.middleware());
 
 // Message cleanup middleware
@@ -134,6 +135,7 @@ bot.action('register_rider', async (ctx) => {
     // Set scene state first
     ctx.scene.state = { role: 'rider' };
     // Then handle the callback query and cleanup
+    // console.log({role: ctx.})
     await ctx.answerCbQuery();
     await ctx.cleanup();
     // Finally enter the scene
