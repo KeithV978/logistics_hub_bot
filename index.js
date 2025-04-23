@@ -76,8 +76,8 @@ bot.command('start', async (ctx) => {
           { text: '🛍️ Create Errand', callback_data: 'create_errand' }
         ],
         [
-          { text: '👤 Signup as Rider', callback_data: 'register_rider' },
-          { text: '🏃 Signup as Errander', callback_data: 'register_errander' }
+          { text: '👤 Rider Signup', callback_data: 'register_rider' },
+          { text: '🏃 Errander Signup', callback_data: 'register_errander' }
         ],
         [
           { text: '📊 My Profile', callback_data: 'view_profile' }
@@ -130,9 +130,12 @@ bot.action('create_errand', async (ctx) => {
 
 bot.action('register_rider', async (ctx) => {
   try {
+    // Set scene state first
+    ctx.scene.state = { role: 'rider' };
+    // Then handle the callback query and cleanup
     await ctx.answerCbQuery();
     await ctx.cleanup();
-    ctx.scene.state = { role: 'rider' }; // Initialize scene state
+    // Finally enter the scene
     await ctx.scene.enter('registration');
   } catch (error) {
     logger.error('Register rider callback error:', error);
@@ -142,9 +145,12 @@ bot.action('register_rider', async (ctx) => {
 
 bot.action('register_errander', async (ctx) => {
   try {
+    // Set scene state first
+    ctx.scene.state = { role: 'errander' };
+    // Then handle the callback query and cleanup
     await ctx.answerCbQuery();
     await ctx.cleanup();
-    ctx.scene.state = { role: 'errander' }; // Initialize scene state
+    // Finally enter the scene
     await ctx.scene.enter('registration');
   } catch (error) {
     logger.error('Register errander callback error:', error);
