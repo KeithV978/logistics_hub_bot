@@ -36,7 +36,7 @@ const registrationScene = new Scenes.WizardScene(
       return ctx.scene.leave();
     }
   },
-  // Step 3: Get bank account
+  // Step 3: Get bank name
   async (ctx) => {
     try {
       if (!ctx.message || !ctx.message.text || !config.PHONE_REGEX.test(ctx.message.text)) {
@@ -46,7 +46,8 @@ const registrationScene = new Scenes.WizardScene(
       
       ctx.scene.state.phoneNumber = ctx.message.text;
       await ctx.cleanup();
-      await ctx.reply('Please enter your bank account details:');
+      await ctx.reply('Please enter your bank name:');
+      ctx.scene.state.bankDetails = {};
       return ctx.wizard.next();
     } catch (error) {
       logger.error('Registration step 3 error:', error);
@@ -54,17 +55,17 @@ const registrationScene = new Scenes.WizardScene(
       return ctx.scene.leave();
     }
   },
-  // Step 4: Get NIN
+  // Step 4: Get account number
   async (ctx) => {
     try {
       if (!ctx.message || !ctx.message.text) {
-        await ctx.reply('Please enter valid bank account details.');
+        await ctx.reply('Please enter a valid bank name.');
         return;
       }
       
-      ctx.scene.state.bankAccount = ctx.message.text;
+      ctx.scene.state.bankDetails.bankName = ctx.message.text;
       await ctx.cleanup();
-      await ctx.reply('Please enter your National Identification Number (NIN):');
+      await ctx.reply('Please enter your account number:');
       return ctx.wizard.next();
     } catch (error) {
       logger.error('Registration step 4 error:', error);
@@ -72,7 +73,43 @@ const registrationScene = new Scenes.WizardScene(
       return ctx.scene.leave();
     }
   },
-  // Step 5: Complete registration
+  // Step 5: Get account name
+  async (ctx) => {
+    try {
+      if (!ctx.message || !ctx.message.text || !/^\d+$/.test(ctx.message.text)) {
+        await ctx.reply('Please enter a valid account number (numbers only).');
+        return;
+      }
+      
+      ctx.scene.state.bankDetails.accountNumber = ctx.message.text;
+      await ctx.cleanup();
+      await ctx.reply('Please enter the account name:');
+      return ctx.wizard.next();
+    } catch (error) {
+      logger.error('Registration step 5 error:', error);
+      await ctx.reply('Sorry, there was an error. Please try /register again.');
+      return ctx.scene.leave();
+    }
+  },
+  // Step 6: Get NIN
+  async (ctx) => {
+    try {
+      if (!ctx.message || !ctx.message.text) {
+        await ctx.reply('Please enter a valid account name.');
+        return;
+      }
+      
+      ctx.scene.state.bankDetails.accountName = ctx.message.text;
+      await ctx.cleanup();
+      await ctx.reply('Please enter your National Identification Number (NIN):');
+      return ctx.wizard.next();
+    } catch (error) {
+      logger.error('Registration step 6 error:', error);
+      await ctx.reply('Sorry, there was an error. Please try /register again.');
+      return ctx.scene.leave();
+    }
+  },
+  // Step 7: Complete registration
   async (ctx) => {
     try {
       if (!ctx.message || !ctx.message.text) {
@@ -103,7 +140,7 @@ const registrationScene = new Scenes.WizardScene(
       await UserService.updateRegistrationDetails(ctx.from.id, {
         fullName: ctx.scene.state.fullName,
         phoneNumber: ctx.scene.state.phoneNumber,
-        bankAccount: ctx.scene.state.bankAccount,
+        bankAccount: ctx.scene.state.bankDetails,
         nin: nin
       });
       

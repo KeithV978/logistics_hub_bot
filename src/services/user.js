@@ -42,12 +42,22 @@ class UserService {
         `UPDATE users 
          SET full_name = $1, 
              phone_number = $2, 
-             bank_account = $3, 
-             nin = $4,
+             bank_name = $3,
+             account_number = $4,
+             account_name = $5,
+             nin = $6,
              updated_at = CURRENT_TIMESTAMP
-         WHERE telegram_id = $5
+         WHERE telegram_id = $7
          RETURNING *`,
-        [fullName, phoneNumber, bankAccount, nin, telegramId]
+        [
+          fullName, 
+          phoneNumber, 
+          bankAccount.bankName,
+          bankAccount.accountNumber,
+          bankAccount.accountName,
+          nin, 
+          telegramId
+        ]
       );
 
       if (result.rows.length === 0) {

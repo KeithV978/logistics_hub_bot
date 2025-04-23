@@ -76,8 +76,8 @@ bot.command('start', async (ctx) => {
           { text: '🛍️ Create Errand', callback_data: 'create_errand' }
         ],
         [
-          { text: '👤 Register as Rider', callback_data: 'register_rider' },
-          { text: '🏃 Register as Errander', callback_data: 'register_errander' }
+          { text: '👤 Signup as Rider', callback_data: 'register_rider' },
+          { text: '🏃 Signup as Errander', callback_data: 'register_errander' }
         ],
         [
           { text: '📊 My Profile', callback_data: 'view_profile' }
@@ -162,6 +162,11 @@ bot.action('view_profile', async (ctx) => {
     let profileText = `Your Profile:\n`;
     profileText += `Name: ${user.full_name}\n`;
     profileText += `Role: ${user.role}\n`;
+    profileText += `Phone: ${user.phone_number}\n`;
+    profileText += `Bank Details:\n`;
+    profileText += `- Bank Name: ${user.bank_name || 'Not set'}\n`;
+    profileText += `- Account Name: ${user.account_name || 'Not set'}\n`;
+    profileText += `- Account Number: ${user.account_number || 'Not set'}\n`;
     profileText += `Rating: ${user.rating.toFixed(1)}/5 (${user.total_ratings} ratings)\n`;
     profileText += `Status: ${user.verification_status}`;
 
@@ -177,12 +182,12 @@ bot.command('register', async (ctx) => {
   try {
     await ctx.cleanup();
     const args = ctx.message.text.split(' ').slice(1);
-    if (args.length !== 1 || !['rider', 'errander'].includes(args[0])) {
+    if (args.length !== 1 || !['rider', 'errander'].includes(args[0].toLowerCase())) {
       return ctx.reply('Please specify your role: /register rider or /register errander');
     }
 
-    const role = args[0];
-    await ctx.scene.enter('registration', { role });
+    const role = args[0].toLowerCase();
+    await ctx.scene.enter('registration', { role: role });
   } catch (error) {
     logger.error('Register command error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');
