@@ -1,14 +1,14 @@
 const { Telegraf, Scenes, session } = require('telegraf');
 const express = require('express');
-const config = require('./src/config/config');
-const { logger, getTimeBasedGreeting } = require('./src/utils/logger');
-const { initDb } = require('./src/config/database');
-const UserService = require('./src/services/user');
-const OrderService = require('./src/services/order');
-const GeolocationService = require('./src/services/geolocation');
-const GroupManager = require('./src/services/group-manager');
-const NotificationService = require('./src/services/notification');
-const registrationScene = require('./src/scenes/registration');
+const config = require('./config/config');
+const logger = require('./utils/logger');
+const { initDb } = require('./config/database');
+const UserService = require('./services/user');
+const OrderService = require('./services/order');
+const GeolocationService = require('./services/geolocation');
+const GroupManager = require('./services/group-manager');
+const NotificationService = require('./services/notification');
+const registrationScene = require('./scenes/registration');
 
 // Initialize the bot
 const bot = new Telegraf(config.BOT_TOKEN);
@@ -17,10 +17,10 @@ const app = express();
 // Parse JSON payloads
 app.use(express.json());
 
-// Set up session and scene middleware correctly
+// Set up scenes
 const stage = new Scenes.Stage([registrationScene]);
-bot.use(session()); // Must be before stage middleware
-bot.use(stage.middleware()); // Apply stage middleware after session
+bot.use(session());
+bot.use(stage.middleware());
 
 // Message cleanup middleware
 bot.use(async (ctx, next) => {
@@ -68,8 +68,7 @@ bot.use(async (ctx, next) => {
 bot.command('start', async (ctx) => {
   try {
     await ctx.cleanup();
-    const userName = ctx.from.first_name || ctx.from.username || 'to you';
-    const timeGreeting = getTimeBasedGreeting();
+    const userName = ctx.from.first_name || ctx.from.username || 'there';
     const keyboard = {
       inline_keyboard: [
         [
@@ -77,8 +76,8 @@ bot.command('start', async (ctx) => {
           { text: '🛍️ Create Errand', callback_data: 'create_errand' }
         ],
         [
-          { text: '👤 Rider Signup', callback_data: 'register_rider' },
-          { text: '🏃 Errander Signup', callback_data: 'register_errander' }
+          { text: '👤 Register as Rider', callback_data: 'register_rider' },
+          { text: '🏃 Register as Errander', callback_data: 'register_errander' }
         ],
         [
           { text: '📊 My Profile', callback_data: 'view_profile' }
@@ -87,7 +86,7 @@ bot.command('start', async (ctx) => {
     };
 
     await ctx.reply(
-      `${timeGreeting}, ${userName}! \n ${config.messages.welcome}`,
+      `Hello ${userName}! ${config.messages.welcome}`,
       { reply_markup: keyboard }
     );
   } catch (error) {
@@ -131,14 +130,9 @@ bot.action('create_errand', async (ctx) => {
 
 bot.action('register_rider', async (ctx) => {
   try {
-    // Set scene state first
-    ctx.scene.state = { role: 'rider' };
-    // Then handle the callback query and cleanup
-    // console.log({role: ctx.scene})
     await ctx.answerCbQuery();
     await ctx.cleanup();
-    // Finally enter the scene
-    await ctx.scene.enter('registration');
+    await ctx.scene.enter('registration', { role: 'rider' });
   } catch (error) {
     logger.error('Register rider callback error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');
@@ -147,13 +141,9 @@ bot.action('register_rider', async (ctx) => {
 
 bot.action('register_errander', async (ctx) => {
   try {
-    // Set scene state first
-    ctx.scene.state = { role: 'errander' };
-    // Then handle the callback query and cleanup
     await ctx.answerCbQuery();
     await ctx.cleanup();
-    // Finally enter the scene
-    await ctx.scene.enter('registration');
+    await ctx.scene.enter('registration', { role: 'errander' });
   } catch (error) {
     logger.error('Register errander callback error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');
@@ -172,14 +162,6 @@ bot.action('view_profile', async (ctx) => {
     let profileText = `Your Profile:\n`;
     profileText += `Name: ${user.full_name}\n`;
     profileText += `Role: ${user.role}\n`;
-    if (user.role === 'rider' && user.vehicle_type) {
-      profileText += `Vehicle Type: ${user.vehicle_type}\n`;
-    }
-    profileText += `Phone: ${user.phone_number}\n`;
-    profileText += `Bank Details:\n`;
-    profileText += `- Bank Name: ${user.bank_name || 'Not set'}\n`;
-    profileText += `- Account Name: ${user.account_name || 'Not set'}\n`;
-    profileText += `- Account Number: ${user.account_number || 'Not set'}\n`;
     profileText += `Rating: ${user.rating.toFixed(1)}/5 (${user.total_ratings} ratings)\n`;
     profileText += `Status: ${user.verification_status}`;
 
@@ -195,13 +177,12 @@ bot.command('register', async (ctx) => {
   try {
     await ctx.cleanup();
     const args = ctx.message.text.split(' ').slice(1);
-    if (args.length !== 1 || !['rider', 'errander'].includes(args[0].toLowerCase())) {
+    if (args.length !== 1 || !['rider', 'errander'].includes(args[0])) {
       return ctx.reply('Please specify your role: /register rider or /register errander');
     }
 
-    const role = args[0].toLowerCase();
-    ctx.scene.state = { role }; // Initialize scene state properly
-    await ctx.scene.enter('registration');
+    const role = args[0];
+    await ctx.scene.enter('registration', { role });
   } catch (error) {
     logger.error('Register command error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');
