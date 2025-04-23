@@ -20,6 +20,18 @@ const initDb = async () => {
   try {
     await client.query('BEGIN');
 
+    // Drop existing tables in correct order (respecting foreign key constraints)
+    await client.query(`
+      DROP TABLE IF EXISTS tracking_sessions CASCADE;
+      DROP TABLE IF EXISTS reviews CASCADE;
+      DROP TABLE IF EXISTS offers CASCADE;
+      DROP TABLE IF EXISTS orders CASCADE;
+      DROP TABLE IF EXISTS users CASCADE;
+    `);
+
+    // Create PostGIS extension if it doesn't exist
+    await client.query('CREATE EXTENSION IF NOT EXISTS postgis;');
+
     // Create users table for riders and erranders
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -37,10 +49,11 @@ const initDb = async () => {
         verification_status VARCHAR(20) DEFAULT 'pending' CHECK (verification_status IN ('pending', 'verified', 'rejected')),
         rating DECIMAL(3,2) DEFAULT 0,
         total_ratings INTEGER DEFAULT 0,
+        location GEOGRAPHY(POINT),
+        last_location_update TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+      );`);
 
     // Create orders table
     await client.query(`
@@ -101,10 +114,10 @@ const initDb = async () => {
     `);
 
     await client.query('COMMIT');
-    console.log('Database tables created successfully');
+    console.log('Database tables dropped and recreated successfully');
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Error creating database tables:', err);
+    console.error('Error recreating database tables:', err);
     throw err;
   } finally {
     client.release();

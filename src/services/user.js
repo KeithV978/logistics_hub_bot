@@ -188,17 +188,19 @@ class UserService {
       const result = await db.query(
         `SELECT u.*, 
                 ST_Distance(
-                  ST_MakePoint($1, $2)::geography,
-                  ST_MakePoint(last_location->>'longitude', last_location->>'latitude')::geography
+                  location,
+                  ST_MakePoint($1, $2)::geography
                 ) / 1000 as distance
          FROM users u
          WHERE role = $3
          AND verification_status = 'verified'
-         AND last_location IS NOT NULL
-         HAVING ST_Distance(
+         AND location IS NOT NULL
+         AND last_location_update > NOW() - INTERVAL '15 minutes'
+         AND ST_DWithin(
+           location,
            ST_MakePoint($1, $2)::geography,
-           ST_MakePoint(last_location->>'longitude', last_location->>'latitude')::geography
-         ) / 1000 <= $4
+           $4 * 1000  -- Convert km to meters
+         )
          ORDER BY distance`,
         [location.longitude, location.latitude, role, radius]
       );
@@ -217,11 +219,12 @@ class UserService {
     try {
       const result = await db.query(
         `UPDATE users 
-         SET last_location = $1,
+         SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+             last_location_update = CURRENT_TIMESTAMP,
              updated_at = CURRENT_TIMESTAMP
-         WHERE telegram_id = $2
+         WHERE telegram_id = $3
          RETURNING *`,
-        [location, telegramId]
+        [location.longitude, location.latitude, telegramId]
       );
 
       if (result.rows.length === 0) {
