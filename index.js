@@ -1,7 +1,7 @@
 const { Telegraf, Scenes, session } = require('telegraf');
 const express = require('express');
 const config = require('./src/config/config');
-const logger = require('./src/utils/logger');
+const { logger, getTimeBasedGreeting } = require('./src/utils/logger');
 const { initDb } = require('./src/config/database');
 const UserService = require('./src/services/user');
 const OrderService = require('./src/services/order');
@@ -68,7 +68,8 @@ bot.use(async (ctx, next) => {
 bot.command('start', async (ctx) => {
   try {
     await ctx.cleanup();
-    const userName = ctx.from.first_name || ctx.from.username || 'there';
+    const userName = ctx.from.first_name || ctx.from.username || 'to you';
+    const timeGreeting = getTimeBasedGreeting();
     const keyboard = {
       inline_keyboard: [
         [
@@ -86,7 +87,7 @@ bot.command('start', async (ctx) => {
     };
 
     await ctx.reply(
-      `Hello ${userName}! ${config.messages.welcome}`,
+      `${timeGreeting}, ${userName}! \n ${config.messages.welcome}`,
       { reply_markup: keyboard }
     );
   } catch (error) {

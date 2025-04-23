@@ -1,6 +1,14 @@
 const winston = require('winston');
 const path = require('path');
 
+// Get time-based greeting
+function getTimeBasedGreeting() {
+  const hour = new Date().getHours();
+  if (hour >= 0 && hour < 12) return 'Good morning';
+  if (hour >= 12 && hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -27,4 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-module.exports = logger;
+module.exports = {
+  logger: logger,
+  getTimeBasedGreeting
+};

@@ -47,7 +47,7 @@ module.exports = {
 
   // Message Templates
   messages: {
-    welcome: "Welcome to the Logistics Hub! 🚚\nI can help you with deliveries and errands. \nOr you want to register to run errands (Errander) or as a rider.",
+    welcome: "\nWelcome to the Logistics Hub! 🚚\nI can help you with errands and deliveries. \nOr you want to register to run errands (errander) or a rider?",
     registerStart: "Let's get you registered! Please provide your full name.",
     invalidPhone: "Invalid phone number format. Please enter a valid phone number (e.g., +1234567890).",
     verificationPending: "Your account is pending verification. We'll notify you once verified.",
