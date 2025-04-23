@@ -27,10 +27,28 @@ const initDb = async () => {
       DROP TABLE IF EXISTS offers CASCADE;
       DROP TABLE IF EXISTS orders CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
+      DROP TABLE IF EXISTS customers CASCADE;
     `);
 
     // Create PostGIS extension if it doesn't exist
     await client.query('CREATE EXTENSION IF NOT EXISTS postgis;');
+
+    // Create customers table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS customers (
+        id SERIAL PRIMARY KEY,
+        telegram_id BIGINT UNIQUE NOT NULL,
+        full_name VARCHAR(100),
+        email VARCHAR(255),
+        phone_number VARCHAR(20),
+        bank_name VARCHAR(100),
+        account_number VARCHAR(50),
+        account_name VARCHAR(100),
+        default_address JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
 
     // Create users table for riders and erranders
     await client.query(`

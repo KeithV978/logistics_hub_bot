@@ -30,7 +30,7 @@ const registrationScene = new Scenes.WizardScene(
       await ctx.reply(config.messages.registerStart);
       return ctx.wizard.next();
     } catch (error) {
-      console.log({error: error})
+      // console.log({error: error})
       logger.error('Registration step 1 error:', { error: error.message, userId: ctx.from.id });
       await ctx.reply('Sorry, there was an error. Please try registering again from the main menu /start.');
       return ctx.scene.leave();

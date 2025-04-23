@@ -9,6 +9,7 @@ const GeolocationService = require('./src/services/geolocation');
 const GroupManager = require('./src/services/group-manager');
 const NotificationService = require('./src/services/notification');
 const registrationScene = require('./src/scenes/registration');
+const customerRegistrationScene = require('./src/scenes/customer-registration');
 
 // Initialize the bot
 const bot = new Telegraf(config.BOT_TOKEN);
@@ -18,7 +19,7 @@ const app = express();
 app.use(express.json());
 
 // Set up scenes
-const stage = new Scenes.Stage([registrationScene]);
+const stage = new Scenes.Stage([registrationScene, customerRegistrationScene]);
 bot.use(session());
 bot.use(stage.middleware());
 
@@ -80,6 +81,7 @@ bot.command('start', async (ctx) => {
           { text: '🏃 Register as Errander', callback_data: 'register_errander' }
         ],
         [
+          { text: '📝 Register as Customer', callback_data: 'register_customer' },
           { text: '📊 My Profile', callback_data: 'view_profile' }
         ]
       ]
@@ -147,6 +149,17 @@ bot.action('register_errander', async (ctx) => {
     await ctx.scene.enter('registration', { role: 'errander' });
   } catch (error) {
     logger.error('Register errander callback error:', error);
+    await ctx.reply('Sorry, there was an error starting registration. Please try again.');
+  }
+});
+
+bot.action('register_customer', async (ctx) => {
+  try {
+    await ctx.answerCbQuery();
+    await ctx.cleanup();
+    await ctx.scene.enter('customer-registration');
+  } catch (error) {
+    logger.error('Register customer callback error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');
   }
 });
