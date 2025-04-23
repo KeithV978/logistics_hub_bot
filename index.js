@@ -20,7 +20,7 @@ app.use(express.json());
 // Set up scenes and session
 bot.use(session());
 const stage = new Scenes.Stage([registrationScene]);
-bot.use(Telegraf.session());  // Add this line to ensure session support
+// bot.use(Telegraf.session());  // Add this line to ensure session support
 bot.use(stage.middleware());
 
 // Message cleanup middleware
