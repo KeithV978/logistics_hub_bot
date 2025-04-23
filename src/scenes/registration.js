@@ -223,7 +223,33 @@ const registrationScene = new Scenes.WizardScene(
 );
 
 // Add scene enter handler to ensure clean state
-registrationScene.enter((ctx) => {
+registrationScene.enter(async (ctx) => {
+  // Initialize message tracking for cleanup
+  if (!ctx.session.messageIds) {
+    ctx.session.messageIds = [];
+  }
+
+  // Initialize cleanup function if not already set
+  if (!ctx.cleanup) {
+    ctx.cleanup = async () => {
+      try {
+        for (const msgId of ctx.session.messageIds) {
+          try {
+            await ctx.telegram.deleteMessage(ctx.chat.id, msgId);
+          } catch (error) {
+            // Ignore errors from already deleted messages
+            if (error.description !== 'Bad Request: message to delete not found') {
+              logger.error('Message deletion error:', { messageId: msgId, error: error.message });
+            }
+          }
+        }
+        ctx.session.messageIds = [];
+      } catch (error) {
+        logger.error('Cleanup error:', error);
+      }
+    };
+  }
+
   // Preserve only the role from scene state, clear everything else
   const role = ctx.scene.state.role;
   ctx.scene.state = { role };
