@@ -1,5 +1,5 @@
 const config = require('../config/config');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 const UserService = require('./user');
 const GeolocationService = require('./geolocation');
 

@@ -1,6 +1,6 @@
 const NodeGeocoder = require('node-geocoder');
 const config = require('../config/config');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 const geocoder = NodeGeocoder({
   provider: config.GEOCODER_PROVIDER,

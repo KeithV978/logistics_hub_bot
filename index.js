@@ -1,7 +1,7 @@
 const { Telegraf, Scenes, session } = require('telegraf');
 const express = require('express');
 const config = require('./src/config/config');
-const logger = require('./src/utils/logger');
+const { logger, getTimeBasedGreeting } = require('./src/utils/logger');
 const { initDb } = require('./src/config/database');
 const UserService = require('./src/services/user');
 const OrderService = require('./src/services/order');

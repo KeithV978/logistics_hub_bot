@@ -1,7 +1,7 @@
 const { Scenes } = require('telegraf');
 const config = require('../config/config');
 const UserService = require('../services/user');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 const registrationScene = new Scenes.WizardScene(
   'registration',
