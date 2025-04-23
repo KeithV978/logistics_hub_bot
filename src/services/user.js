@@ -18,26 +18,10 @@ class UserService {
         throw new Error('User already registered');
       }
 
-      // Create temporary user record with all required fields
+      // Create temporary user record with just telegram_id and role
       await db.query(
-        `INSERT INTO users (
-          telegram_id, 
-          role, 
-          full_name,
-          phone_number,
-          verification_status,
-          rating,
-          total_ratings
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-          telegramId,
-          role,
-          'Pending Registration',  // temporary full name
-          '+0000000000',          // temporary phone number
-          'pending',              // default verification status
-          0,                      // default rating
-          0                      // default total ratings
-        ]
+        'INSERT INTO users (telegram_id, role) VALUES ($1, $2)',
+        [telegramId, role]
       );
 
       return true;
