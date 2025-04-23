@@ -26,22 +26,16 @@ class UserService {
           full_name,
           phone_number,
           verification_status,
-          bank_name,
-          account_number,
-          account_name,
           rating,
           total_ratings
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           telegramId,
           role,
           'Pending Registration',  // temporary full name
           '+0000000000',          // temporary phone number
           'pending',              // default verification status
-          'Pending',             // temporary bank name
-          '0000000000',          // temporary account number
-          'Pending Registration', // temporary account name
-          0,                     // default rating
+          0,                      // default rating
           0                      // default total ratings
         ]
       );
