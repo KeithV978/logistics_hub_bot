@@ -42,6 +42,9 @@ module.exports = {
   PHONE_REGEX: /^\+?[1-9]\d{1,14}$/, // International phone number format
   PRICE_REGEX: /^\d+(\.\d{1,2})?$/, // Price format (e.g., 10 or 10.99)
 
+  // Vehicle Types
+  VEHICLE_TYPES: ['Bicycl', 'Motorcycle', 'Car', 'Van', 'Truck'],
+
   // Message Templates
   messages: {
     welcome: "Welcome to the Logistics Hub! 🚚\nI can help you with deliveries and errands.",
@@ -54,6 +57,8 @@ module.exports = {
     orderAccepted: "Great! Your order has been accepted. A private group will be created for communication.",
     trackingStarted: "Live tracking has started! You can view the location in the private group.",
     transactionCompleted: "Transaction completed! Please rate your experience from 1-5 stars.",
-    groupRules: `Welcome to the order group! 📦\n\nRules:\n1. Be respectful\n2. Share updates\n3. Report issues to admin\n\nHave a great experience! 🤝`
+    groupRules: `Welcome to the order group! 📦\n\nRules:\n1. Be respectful\n2. Share updates\n3. Report issues to admin\n\nHave a great experience! 🤝`,
+    selectVehicle: "Please select your vehicle type:",
+    invalidVehicle: "Invalid vehicle type. Please select from the available options."
   }
 };

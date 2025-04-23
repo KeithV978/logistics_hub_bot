@@ -162,6 +162,9 @@ bot.action('view_profile', async (ctx) => {
     let profileText = `Your Profile:\n`;
     profileText += `Name: ${user.full_name}\n`;
     profileText += `Role: ${user.role}\n`;
+    if (user.role === 'rider' && user.vehicle_type) {
+      profileText += `Vehicle Type: ${user.vehicle_type}\n`;
+    }
     profileText += `Phone: ${user.phone_number}\n`;
     profileText += `Bank Details:\n`;
     profileText += `- Bank Name: ${user.bank_name || 'Not set'}\n`;

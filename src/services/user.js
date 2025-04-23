@@ -36,7 +36,7 @@ class UserService {
    */
   static async updateRegistrationDetails(telegramId, details) {
     try {
-      const { fullName, phoneNumber, bankAccount, nin } = details;
+      const { fullName, phoneNumber, bankAccount, vehicleType, nin } = details;
       
       const result = await db.query(
         `UPDATE users 
@@ -45,9 +45,10 @@ class UserService {
              bank_name = $3,
              account_number = $4,
              account_name = $5,
-             nin = $6,
+             vehicle_type = $6,
+             nin = $7,
              updated_at = CURRENT_TIMESTAMP
-         WHERE telegram_id = $7
+         WHERE telegram_id = $8
          RETURNING *`,
         [
           fullName, 
@@ -55,6 +56,7 @@ class UserService {
           bankAccount.bankName,
           bankAccount.accountNumber,
           bankAccount.accountName,
+          vehicleType || null,
           nin, 
           telegramId
         ]

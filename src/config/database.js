@@ -31,6 +31,7 @@ const initDb = async () => {
         bank_name VARCHAR(100),
         account_number VARCHAR(50),
         account_name VARCHAR(100),
+        vehicle_type VARCHAR(50),
         nin VARCHAR(50),
         verification_status VARCHAR(20) DEFAULT 'pending' CHECK (verification_status IN ('pending', 'verified', 'rejected')),
         rating DECIMAL(3,2) DEFAULT 0,
