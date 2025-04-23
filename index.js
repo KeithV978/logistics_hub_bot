@@ -17,11 +17,10 @@ const app = express();
 // Parse JSON payloads
 app.use(express.json());
 
-// Set up scenes and session
-bot.use(session());
+// Set up session and scene middleware correctly
 const stage = new Scenes.Stage([registrationScene]);
-// bot.use(Telegraf.session());  // Add this line to ensure session support
-bot.use(stage.middleware());
+bot.use(session()); // Must be before stage middleware
+bot.use(stage.middleware()); // Apply stage middleware after session
 
 // Message cleanup middleware
 bot.use(async (ctx, next) => {

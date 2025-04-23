@@ -8,9 +8,13 @@ const registrationScene = new Scenes.WizardScene(
   // Step 1: Get full name
   async (ctx) => {
     try {
-      console.log({role: ctx.scene.state.role})
+      logger.info('Registration step 1:', { 
+        state: ctx.scene.state,
+        userId: ctx.from.id 
+      });
+
       // Get role from scene state (set during scene.enter)
-      if (!ctx.scene.state.role) {
+      if (!ctx.scene.state || !ctx.scene.state.role) {
         await ctx.reply('Invalid registration. Please use the signup buttons from the main menu /start.');
         return ctx.scene.leave();
       }
@@ -185,8 +189,19 @@ const registrationScene = new Scenes.WizardScene(
   }
 );
 
-// Add scene enter handler to ensure clean state
+// Add scene enter handler with improved state handling
 registrationScene.enter((ctx) => {
+  logger.info('Entering registration scene:', { 
+    state: ctx.scene.state,
+    userId: ctx.from.id 
+  });
+  
+  // Ensure we have a role in the state
+  if (!ctx.scene.state || !ctx.scene.state.role) {
+    ctx.reply('Invalid registration. Please use the signup buttons from the main menu /start.');
+    return ctx.scene.leave();
+  }
+
   // Preserve only the role from scene state, clear everything else
   const role = ctx.scene.state.role;
   ctx.scene.state = { role };
