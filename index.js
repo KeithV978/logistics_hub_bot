@@ -1,14 +1,14 @@
 const { Telegraf, Scenes, session } = require('telegraf');
 const express = require('express');
-const config = require('./config/config');
-const logger = require('./utils/logger');
-const { initDb } = require('./config/database');
-const UserService = require('./services/user');
-const OrderService = require('./services/order');
-const GeolocationService = require('./services/geolocation');
-const GroupManager = require('./services/group-manager');
-const NotificationService = require('./services/notification');
-const registrationScene = require('./scenes/registration');
+const config = require('./src/config/config');
+const logger = require('./src/utils/logger');
+const { initDb } = require('./src/config/database');
+const UserService = require('./src/services/user');
+const OrderService = require('./src/services/order');
+const GeolocationService = require('./src/services/geolocation');
+const GroupManager = require('./src/services/group-manager');
+const NotificationService = require('./src/services/notification');
+const registrationScene = require('./src/scenes/registration');
 
 // Initialize the bot
 const bot = new Telegraf(config.BOT_TOKEN);
