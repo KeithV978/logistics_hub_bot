@@ -192,7 +192,8 @@ bot.command('register', async (ctx) => {
     }
 
     const role = args[0].toLowerCase();
-    await ctx.scene.enter('registration', { role: role });
+    ctx.scene.state = { role }; // Initialize scene state properly
+    await ctx.scene.enter('registration');
   } catch (error) {
     logger.error('Register command error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');

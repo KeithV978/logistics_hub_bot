@@ -184,6 +184,14 @@ const registrationScene = new Scenes.WizardScene(
   }
 );
 
+// Add scene enter handler to ensure clean state
+registrationScene.enter((ctx) => {
+  // Preserve only the role from scene state, clear everything else
+  const role = ctx.scene.state.role;
+  ctx.scene.state = { role };
+  return Promise.resolve();
+});
+
 // Helper function to complete registration
 async function completeRegistration(ctx) {
   try {
