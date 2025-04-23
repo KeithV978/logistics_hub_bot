@@ -1,0 +1,116 @@
+{
+  "metadata": {
+    "title": "Telegram Bot for Logistics and Errand Services",
+    "version": "1.0",
+    "author": "Not specified",
+    "created": "2025-04-14",
+    "status": "draft"
+  },
+  "overview": "This Telegram bot facilitates logistics and errand services by connecting customers with riders (for deliveries) and erranders (for errands). It enables seamless communication, secure transactions, and includes live tracking, automated notifications, and error handling.",
+  "goals": [
+    "Allow customers to place delivery and errand orders without registering.",
+    "Provide a registration and verification system for riders and erranders.",
+    "Enable job offers and selection.",
+    "Facilitate live location tracking and private group communication.",
+    "Handle transactions securely with error handling and real-time updates."
+  ],
+  "features": [
+    {
+      "name": "User Roles",
+      "description": "Defines actions for customers, riders, and erranders.",
+      "priority": "high",
+      "acceptance_criteria": [
+        "Customers can create and accept orders/errands without registering.",
+        "Riders and erranders must register and be verified before accepting jobs."
+      ]
+    },
+    {
+      "name": "Order & Errand Creation",
+      "description": "Allows customers to place delivery or errand requests.",
+      "priority": "high",
+      "acceptance_criteria": [
+        "Customers can create an order or errand with location and instructions.",
+        "Bot expands search radius incrementally if no worker is found."
+      ]
+    },
+    {
+      "name": "Offer Management",
+      "description": "Workers can make offers, customers can accept one offer.",
+      "priority": "high",
+      "acceptance_criteria": [
+        "Customers can view and accept offers.",
+        "System locks order to accepted offer and notifies others."
+      ]
+    },
+    {
+      "name": "Live Tracking",
+      "description": "Supports live location sharing between workers and customers.",
+      "priority": "high",
+      "acceptance_criteria": [
+        "Workers share live location after offer is accepted.",
+        "Tracking stops upon transaction completion."
+      ]
+    },
+    {
+      "name": "Group Communication",
+      "description": "Creates a private group for each transaction.",
+      "priority": "medium",
+      "acceptance_criteria": [
+        "Group includes customer, worker, and bot.",
+        "Live location updates and messages are shared within the group.",
+        "Bot is the admin",
+        "Bot kicks everyone out of the group after tarnsaction complition and deletes group"
+      ]
+    },
+    {
+      "name": "Ratings and Reviews",
+      "description": "Customers rate workers after order completion.",
+      "priority": "medium",
+      "acceptance_criteria": [
+        "Customers rate on a scale of 1-5 with optional review.",
+        "System stores and averages ratings."
+      ]
+    }
+  ],
+  "user_stories": [
+    {
+      "role": "customer",
+      "goal": "place an order or errand without registration",
+      "benefit": "quick and hassle-free service access"
+    },
+    {
+      "role": "rider",
+      "goal": "accept logistics jobs after registration",
+      "benefit": "earn income by completing deliveries"
+    },
+    {
+      "role": "errander",
+      "goal": "get notified of nearby errands and make offers",
+      "benefit": "find and complete local tasks for pay"
+    }
+  ],
+  "tech_constraints": {
+    "platform": "Telegram",
+    "tech_stack": [
+      "Node.js",
+      "PostgreSQL",
+      "Telegraf"
+    ],
+    "deployment": "Cloud server with secure webhook handling",
+    "external_apis": [
+      "Telegram Bot API",
+      "NIN Verification API",
+      "Geolocation API"
+    ]
+  },
+  "non_goals": [
+    "No in-app payment integration (payments are offline).",
+    "No web or mobile interface (Telegram only).",
+    "No multi-language support in initial version."
+  ],
+  "open_questions": [
+    "Should in-app payments be considered for future versions?",
+    "Is an admin dashboard necessary at MVP stage?",
+    "Should location sharing be enforced or optional for workers?"
+  ]
+}
