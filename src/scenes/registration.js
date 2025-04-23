@@ -8,7 +8,7 @@ const registrationScene = new Scenes.WizardScene(
   // Step 1: Get full name
   async (ctx) => {
     try {
-      console.log({role: ctx.scene.state.role})
+      // console.log({role: ctx.scene.state.role})
       // Get role from scene state (set during scene.enter)
       if (!ctx.scene.state.role) {
         await ctx.reply('Invalid registration. Please use the signup buttons from the main menu /start.');
@@ -25,13 +25,14 @@ const registrationScene = new Scenes.WizardScene(
         }
         throw error;
       }
-
+      
       await ctx.cleanup();
       await ctx.reply(config.messages.registerStart);
       return ctx.wizard.next();
     } catch (error) {
+      console.log({error: error})
       logger.error('Registration step 1 error:', { error: error.message, userId: ctx.from.id });
-      await ctx.reply('Sorry, there was an error. Please try registering again from the main menu.');
+      await ctx.reply('Sorry, there was an error. Please try registering again from the main menu /start.');
       return ctx.scene.leave();
     }
   },
