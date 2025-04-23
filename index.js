@@ -132,7 +132,8 @@ bot.action('register_rider', async (ctx) => {
   try {
     await ctx.answerCbQuery();
     await ctx.cleanup();
-    await ctx.scene.enter('registration', { role: 'rider' });
+    ctx.scene.state = { role: 'rider' }; // Initialize scene state
+    await ctx.scene.enter('registration');
   } catch (error) {
     logger.error('Register rider callback error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');
@@ -143,7 +144,8 @@ bot.action('register_errander', async (ctx) => {
   try {
     await ctx.answerCbQuery();
     await ctx.cleanup();
-    await ctx.scene.enter('registration', { role: 'errander' });
+    ctx.scene.state = { role: 'errander' }; // Initialize scene state
+    await ctx.scene.enter('registration');
   } catch (error) {
     logger.error('Register errander callback error:', error);
     await ctx.reply('Sorry, there was an error starting registration. Please try again.');

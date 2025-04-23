@@ -43,7 +43,7 @@ module.exports = {
   PRICE_REGEX: /^\d+(\.\d{1,2})?$/, // Price format (e.g., 10 or 10.99)
 
   // Vehicle Types
-  VEHICLE_TYPES: ['Bicycl', 'Motorcycle', 'Car', 'Van', 'Truck'],
+  VEHICLE_TYPES: ['Bicycle', 'Motorcycle', 'Car', 'Van', 'Truck'],
 
   // Message Templates
   messages: {

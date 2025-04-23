@@ -8,13 +8,29 @@ const registrationScene = new Scenes.WizardScene(
   // Step 1: Get full name
   async (ctx) => {
     try {
-      ctx.scene.state.role = ctx.scene.state.role || ctx.match[1];
+      // Get role from scene state (set during scene.enter)
+      if (!ctx.scene.state.role) {
+        await ctx.reply('Invalid registration. Please use the signup buttons from the main menu.');
+        return ctx.scene.leave();
+      }
+
+      // Initialize user record
+      try {
+        await UserService.startRegistration(ctx.from.id, ctx.scene.state.role);
+      } catch (error) {
+        if (error.message === 'User already registered') {
+          await ctx.reply('You are already registered. Use /start to access the menu.');
+          return ctx.scene.leave();
+        }
+        throw error;
+      }
+
       await ctx.cleanup();
-      await ctx.reply('Please enter your full name:');
+      await ctx.reply(config.messages.registerStart);
       return ctx.wizard.next();
     } catch (error) {
-      logger.error('Registration step 1 error:', error);
-      await ctx.reply('Sorry, there was an error. Please try /register again.');
+      logger.error('Registration step 1 error:', { error: error.message, userId: ctx.from.id });
+      await ctx.reply('Sorry, there was an error. Please try registering again from the main menu.');
       return ctx.scene.leave();
     }
   },
