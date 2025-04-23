@@ -134,7 +134,7 @@ bot.action('register_rider', async (ctx) => {
     // Set scene state first
     ctx.scene.state = { role: 'rider' };
     // Then handle the callback query and cleanup
-    console.log({role: ctx})
+    // console.log({role: ctx.scene})
     await ctx.answerCbQuery();
     await ctx.cleanup();
     // Finally enter the scene
