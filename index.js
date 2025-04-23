@@ -128,6 +128,7 @@ bot.action('create_errand', async (ctx) => {
   }
 });
 
+// Registration handled through inline keyboard actions
 bot.action('register_rider', async (ctx) => {
   try {
     await ctx.answerCbQuery();
@@ -169,23 +170,6 @@ bot.action('view_profile', async (ctx) => {
   } catch (error) {
     logger.error('View profile callback error:', error);
     await ctx.reply('Sorry, there was an error retrieving your profile. Please try again.');
-  }
-});
-
-// Updated registration command
-bot.command('register', async (ctx) => {
-  try {
-    await ctx.cleanup();
-    const args = ctx.message.text.split(' ').slice(1);
-    if (args.length !== 1 || !['rider', 'errander'].includes(args[0])) {
-      return ctx.reply('Please specify your role: /register rider or /register errander');
-    }
-
-    const role = args[0];
-    await ctx.scene.enter('registration', { role });
-  } catch (error) {
-    logger.error('Register command error:', error);
-    await ctx.reply('Sorry, there was an error starting registration. Please try again.');
   }
 });
 
