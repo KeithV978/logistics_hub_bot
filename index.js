@@ -69,7 +69,7 @@ bot.use(async (ctx, next) => {
 bot.command('start', async (ctx) => {
   try {
     await ctx.cleanup();
-    const userName = ctx.from.first_name || ctx.from.username || 'there';
+    const userName = ctx.from.first_name || ctx.from.username || 'to you';
     const keyboard = {
       inline_keyboard: [
         [
@@ -306,19 +306,27 @@ bot.command('delivery_successful', async (ctx) => {
 
 bot.command('rate', async (ctx) => {
   try {
-    const [workerId, rating, ...reviewParts] = ctx.message.text.split(' ').slice(1);
+    const args = ctx.message.text.split(' ').slice(1);
+    const workerId = args[0];
+    const rating = args[1];
+    const reviewParts = args.slice(2);
     
-    if (!workerId || !rating || !reviewParts.length) {
+    if (!workerId || !rating || reviewParts.length === 0) {
       return ctx.reply('Please use format: /rate [worker_id] [1-5] [review text]');
     }
 
     const numericRating = parseInt(rating);
-    if (numericRating < config.MIN_RATING || numericRating > config.MAX_RATING) {
+    if (isNaN(numericRating) || numericRating < config.MIN_RATING || numericRating > config.MAX_RATING) {
       return ctx.reply(`Rating must be between ${config.MIN_RATING} and ${config.MAX_RATING}`);
     }
 
+    const numericWorkerId = parseInt(workerId);
+    if (isNaN(numericWorkerId)) {
+      return ctx.reply('Invalid worker ID provided');
+    }
+
     await OrderService.addReview(
-      parseInt(workerId),
+      numericWorkerId,
       ctx.from.id,
       reviewParts.join(' '),
       numericRating

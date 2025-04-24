@@ -14,30 +14,52 @@ class GroupManager {
         [order.customer_telegram_id, worker.telegram_id]
       );
 
-      // Set bot as admin
-      await bot.telegram.promoteChatMember(chat.id, bot.botInfo.id, {
-        can_manage_chat: true,
-        can_delete_messages: true,
-        can_manage_video_chats: true,
-        can_restrict_members: true,
-        can_promote_members: false,
-        can_change_info: true,
-        can_invite_users: true
-      });
+      // Keep track of group creation state for cleanup in case of failure
+      let groupCreated = true;
+      let adminSet = false;
+      let locationEnabled = false;
 
-      // Send welcome message and rules
-      await bot.telegram.sendMessage(chat.id, config.messages.groupRules);
+      try {
+        // Set bot as admin
+        await bot.telegram.promoteChatMember(chat.id, bot.botInfo.id, {
+          can_manage_chat: true,
+          can_delete_messages: true,
+          can_manage_video_chats: true,
+          can_restrict_members: true,
+          can_promote_members: false,
+          can_change_info: true,
+          can_invite_users: true
+        });
+        adminSet = true;
 
-      // Enable location sharing in group
-      await bot.telegram.sendMessage(chat.id, 'Location sharing has been enabled for this group.');
+        // Send welcome message and rules
+        await bot.telegram.sendMessage(chat.id, config.messages.groupRules);
 
-      // Update order with group chat id
-      await db.query(
-        'UPDATE orders SET group_chat_id = $1 WHERE id = $2',
-        [chat.id, order.id]
-      );
+        // Enable location sharing in group
+        await bot.telegram.sendMessage(chat.id, 'Location sharing has been enabled for this group.');
+        locationEnabled = true;
 
-      return chat;
+        // Update order with group chat id
+        await db.query(
+          'UPDATE orders SET group_chat_id = $1 WHERE id = $2',
+          [chat.id, order.id]
+        );
+
+        return chat;
+      } catch (error) {
+        // Cleanup if any step fails after group creation
+        if (groupCreated) {
+          try {
+            await this.cleanupGroupOnError(bot, chat.id);
+          } catch (cleanupError) {
+            logger.error('Group cleanup error:', { 
+              chatId: chat.id, 
+              error: cleanupError.message 
+            });
+          }
+        }
+        throw error;
+      }
     } catch (error) {
       logger.error('Create order group error:', { orderId: order.id, error: error.message });
       throw error;
@@ -58,21 +80,37 @@ class GroupManager {
         return;
       }
 
-      // Update tracking session
-      await db.query(
-        `UPDATE tracking_sessions 
-         SET current_location = $1,
-             last_update = CURRENT_TIMESTAMP
-         WHERE order_id = $2`,
-        [
-          {
-            latitude: msg.location.latitude,
-            longitude: msg.location.longitude,
-            timestamp: msg.date
-          },
-          order.rows[0].id
-        ]
-      );
+      // Update tracking session with retry
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          await db.query(
+            `UPDATE tracking_sessions 
+             SET current_location = $1,
+                 last_update = CURRENT_TIMESTAMP,
+                 status = 'active'
+             WHERE order_id = $2
+             RETURNING *`,
+            [
+              {
+                latitude: msg.location.latitude,
+                longitude: msg.location.longitude,
+                timestamp: msg.date
+              },
+              order.rows[0].id
+            ]
+          );
+          break;
+        } catch (error) {
+          retries++;
+          if (retries === maxRetries) {
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
+      }
 
       // Check if location updates are too infrequent
       const lastUpdate = new Date(order.rows[0].last_update);
@@ -83,6 +121,14 @@ class GroupManager {
         await bot.telegram.sendMessage(
           msg.chat.id,
           'Location updates are infrequent. Please ensure stable sharing.'
+        );
+
+        // Update tracking session status
+        await db.query(
+          `UPDATE tracking_sessions 
+           SET status = 'paused'
+           WHERE order_id = $1`,
+          [order.rows[0].id]
         );
       }
     } catch (error) {
@@ -107,21 +153,7 @@ class GroupManager {
         return;
       }
 
-      const chatId = order.rows[0].group_chat_id;
-
-      // Get chat members
-      const members = await bot.telegram.getChatAdministrators(chatId);
-
-      // Remove all members except bot
-      for (const member of members) {
-        if (member.user.id !== bot.botInfo.id) {
-          await bot.telegram.banChatMember(chatId, member.user.id);
-          await bot.telegram.unbanChatMember(chatId, member.user.id);
-        }
-      }
-
-      // Delete group
-      await bot.telegram.deleteChat(chatId);
+      await this.cleanupGroupOnError(bot, order.rows[0].group_chat_id);
 
       // Update order
       await db.query(
@@ -135,13 +167,84 @@ class GroupManager {
   }
 
   /**
+   * Helper method to cleanup a group
+   */
+  static async cleanupGroupOnError(bot, chatId) {
+    try {
+      // Get chat members
+      const members = await bot.telegram.getChatAdministrators(chatId);
+
+      // Remove all members except bot with retries
+      for (const member of members) {
+        if (member.user.id !== bot.botInfo.id) {
+          let retries = 0;
+          const maxRetries = 3;
+
+          while (retries < maxRetries) {
+            try {
+              await bot.telegram.banChatMember(chatId, member.user.id);
+              await bot.telegram.unbanChatMember(chatId, member.user.id);
+              break;
+            } catch (error) {
+              retries++;
+              if (retries === maxRetries) {
+                throw error;
+              }
+              await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+            }
+          }
+        }
+      }
+
+      // Delete group with retries
+      let retries = 0;
+      const maxRetries = 3;
+
+      while (retries < maxRetries) {
+        try {
+          await bot.telegram.deleteChat(chatId);
+          break;
+        } catch (error) {
+          retries++;
+          if (retries === maxRetries) {
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
+      }
+    } catch (error) {
+      logger.error('Group cleanup helper error:', { chatId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
    * Start tracking session
    */
   static async startTracking(orderId, userId) {
     try {
+      // Check if there's already an active session
+      const existingSession = await db.query(
+        `SELECT * FROM tracking_sessions 
+         WHERE order_id = $1 AND user_id = $2 
+         AND status != 'completed'`,
+        [orderId, userId]
+      );
+
+      if (existingSession.rows.length > 0) {
+        await db.query(
+          `UPDATE tracking_sessions 
+           SET status = 'active',
+               last_update = CURRENT_TIMESTAMP
+           WHERE id = $1`,
+          [existingSession.rows[0].id]
+        );
+        return;
+      }
+
       await db.query(
-        `INSERT INTO tracking_sessions (order_id, user_id)
-         VALUES ($1, $2)`,
+        `INSERT INTO tracking_sessions (order_id, user_id, status)
+         VALUES ($1, $2, 'active')`,
         [orderId, userId]
       );
     } catch (error) {
@@ -158,8 +261,9 @@ class GroupManager {
       await db.query(
         `UPDATE tracking_sessions 
          SET status = 'completed',
-             updated_at = CURRENT_TIMESTAMP
-         WHERE order_id = $1`,
+             last_update = CURRENT_TIMESTAMP
+         WHERE order_id = $1 
+         AND status != 'completed'`,
         [orderId]
       );
     } catch (error) {

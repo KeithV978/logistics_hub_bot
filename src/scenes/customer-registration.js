@@ -51,12 +51,13 @@ const customerRegistrationScene = new Scenes.WizardScene(
   // Step 3: Get phone number
   async (ctx) => {
     try {
-      if (!ctx.message?.text || !validateEmail(ctx.message.text)) {
-        await ctx.reply('Please enter a valid email address.');
+      const email = ctx.message?.text;
+      if (!email || !validateEmail(email)) {
+        await ctx.reply('Please enter a valid email address in the format: example@domain.com');
         return;
       }
 
-      ctx.scene.state.email = ctx.message.text;
+      ctx.scene.state.email = email;
       await ctx.cleanup();
       await ctx.reply('Please share your phone number (e.g., +1234567890):');
       return ctx.wizard.next();

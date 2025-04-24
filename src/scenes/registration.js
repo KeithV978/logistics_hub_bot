@@ -261,6 +261,8 @@ async function completeRegistration(ctx) {
   try {
     await ctx.cleanup();
     
+    let verificationStatus = 'pending';
+    
     // Verify NIN
     try {
       const isValid = await UserService.verifyNIN(ctx.scene.state.nin);
@@ -268,12 +270,13 @@ async function completeRegistration(ctx) {
         await ctx.reply('Invalid NIN provided. Please try /register again.');
         return ctx.scene.leave();
       }
+      verificationStatus = 'pending_manual'; // NIN valid but needs manual check
     } catch (error) {
       logger.error('NIN verification error:', error);
-      // Continue with manual verification if NIN service is down
+      verificationStatus = 'pending_manual'; // Service down, needs manual verification
       await ctx.telegram.sendMessage(
         config.ADMIN_CHAT_ID,
-        `Manual verification needed for user ${ctx.from.id}\nNIN: ${ctx.scene.state.nin}`
+        `Manual verification needed for user ${ctx.from.id}\nNIN: ${ctx.scene.state.nin}\nReason: ${error.message}`
       );
     }
     
@@ -284,7 +287,8 @@ async function completeRegistration(ctx) {
       bankAccount: ctx.scene.state.bankDetails,
       vehicleType: ctx.scene.state.vehicleType,
       nin: ctx.scene.state.nin,
-      eligibilitySlipFileId: ctx.scene.state.eligibilitySlipFileId
+      eligibilitySlipFileId: ctx.scene.state.eligibilitySlipFileId,
+      verificationStatus: verificationStatus
     });
     
     await ctx.reply(config.messages.verificationPending);
