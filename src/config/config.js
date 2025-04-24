@@ -1,30 +1,11 @@
 require('dotenv').config();
 
-// Validate required environment variables
-const requiredEnvVars = [
-  'BOT_TOKEN',
-  'WEBHOOK_URL',
-  'SERVER_URL',
-  'ADMIN_CHAT_ID',
-  'NIN_API_KEY',
-  'NIN_API_URL',
-  'GEOCODER_PROVIDER',
-  'GEOCODER_API_KEY',
-  'DATABASE_URL'
-];
-
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    throw new Error(`Missing required environment variable: ${envVar}`);
-  }
-}
-
 module.exports = {
   // Bot and Server Configuration
   BOT_TOKEN: process.env.BOT_TOKEN,
   WEBHOOK_URL: process.env.WEBHOOK_URL,
   SERVER_URL: process.env.SERVER_URL,
-  PORT: parseInt(process.env.PORT) || 3000,
+  PORT: process.env.PORT || 3000,
   ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID,
 
   // Search Radius Configuration (in kilometers)
